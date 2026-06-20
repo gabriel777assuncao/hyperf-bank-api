@@ -23,13 +23,28 @@ jobs:
         run: docker compose up -d
 
       - name: Wait for services
-        run: sleep 10
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9501/health > /dev/null 2>&1; then
+              echo "Service is up!"
+              break
+            fi
+            echo "Waiting for service... ($i/30)"
+            sleep 2
+          done
 
       - name: Health check
         run: |
-          curl -f http://localhost:9501/health || exit 1
+          curl -f http://localhost:9501/health
+          echo ""
+          echo "Health check passed!"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose logs app
 
       - name: Stop containers
+        if: always()
         run: docker compose down
 
   lint:
