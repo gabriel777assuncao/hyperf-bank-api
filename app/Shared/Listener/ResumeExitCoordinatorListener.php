@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 
-namespace App\Listener;
+namespace App\Shared\Listener;
 
 use Hyperf\Command\Event\AfterExecute;
 use Hyperf\Coordinator\{Constants, CoordinatorManager};
