@@ -6,7 +6,7 @@ ARG APP_ENV=dev
 
 ENV TIMEZONE=${timezone} \
     APP_ENV=${APP_ENV} \
-    SCAN_CACHEABLE=${APP_ENV:+false}
+    SCAN_CACHEABLE=false
 
 RUN set -ex \
     && php -v \
@@ -21,14 +21,19 @@ RUN set -ex \
     } | tee conf.d/99_overrides.ini \
     && ln -sf /usr/share/zoneinfo/${TIMEZONE} /etc/localtime \
     && echo "${TIMEZONE}" > /etc/timezone \
+    && apk add --no-cache inotify-tools \
     && rm -rf /var/cache/apk/* /tmp/* /usr/share/man \
     && echo -e "\033[42;37m Build Completed :).\033[0m\n"
 
 WORKDIR /opt/www
 
+COPY composer.* /opt/www/
+RUN composer install --no-scripts
+
 COPY . /opt/www
-RUN composer install --no-dev -o && php bin/hyperf.php
+RUN composer dump-autoload -o
 
 EXPOSE 9501
 
-ENTRYPOINT ["php", "/opt/www/bin/hyperf.php", "start"]
+ENTRYPOINT ["php", "/opt/www/bin/hyperf.php"]
+CMD ["start"]

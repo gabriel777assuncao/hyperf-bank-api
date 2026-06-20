@@ -13,6 +13,7 @@ services:
     environment:
       - APP_ENV=${APP_ENV:-dev}
       - SCAN_CACHEABLE=false
+    command: ["server:watch"]
     depends_on:
       mysql:
         condition: service_healthy

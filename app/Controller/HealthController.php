@@ -9,7 +9,7 @@ class HealthController extends AbstractController
     public function check()
     {
         return $this->response->json([
-            'status' => 'ok',
+            'status' => 'healthy',
             'timestamp' => time(),
         ]);
     }
