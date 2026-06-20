@@ -13,8 +13,7 @@ declare(strict_types=1);
 namespace App\Listener;
 
 use Hyperf\Command\Event\AfterExecute;
-use Hyperf\Coordinator\Constants;
-use Hyperf\Coordinator\CoordinatorManager;
+use Hyperf\Coordinator\{Constants, CoordinatorManager};
 use Hyperf\Event\Annotation\Listener;
 use Hyperf\Event\Contract\ListenerInterface;
 

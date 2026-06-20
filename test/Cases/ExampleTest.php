@@ -20,7 +20,7 @@ use Hyperf\Testing\TestCase;
  */
 class ExampleTest extends TestCase
 {
-    public function testExample()
+    public function test_example()
     {
         $this->get('/')->assertOk()->assertSee('Hyperf');
     }
