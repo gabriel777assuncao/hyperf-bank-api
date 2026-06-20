@@ -12,10 +12,9 @@ declare(strict_types=1);
 
 namespace HyperfTest;
 
+use function Hyperf\Support\make;
 use Hyperf\Testing\Client;
 use PHPUnit\Framework\TestCase;
-
-use function Hyperf\Support\make;
 
 /**
  * Class HttpTestCase.

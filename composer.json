@@ -36,7 +36,8 @@
         "hyperf/watcher": "~3.2.0",
         "mockery/mockery": "^1.0",
         "phpstan/phpstan": "^2.0",
-        "swoole/ide-helper": "^6.0"
+        "swoole/ide-helper": "^6.0",
+        "symplify/easy-coding-standard": "^13.2"
     },
     "suggest": {
         "ext-openssl": "Required to use HTTPS.",
@@ -72,6 +73,8 @@
         ],
         "test": "co-phpunit --prepend test/bootstrap.php --colors=always",
         "cs-fix": "php-cs-fixer fix $1",
+        "ecs": "ecs check --fix",
+        "ecs:check": "ecs check",
         "analyse": "phpstan analyse --memory-limit 300M",
         "start": [
             "Composer\\Config::disableProcessTimeout",
