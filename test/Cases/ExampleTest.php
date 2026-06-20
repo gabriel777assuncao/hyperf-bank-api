@@ -22,6 +22,6 @@ class ExampleTest extends TestCase
 {
     public function test_example()
     {
-        $this->get('/')->assertOk()->assertSee('Hyperf');
+        $this->get('/health')->assertOk()->assertSee('OK');
     }
 }
