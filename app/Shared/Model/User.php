@@ -11,10 +11,19 @@ class User extends Model
     protected ?string $table = 'users';
 
     /** @var array<string> */
-    protected array $fillable = ['id', 'full_name', 'cpf', 'email', 'password', 'type'];
+    protected array $fillable = [
+        'id',
+        'full_name',
+        'cpf',
+        'email',
+        'password',
+        'type',
+    ];
 
     /** @var array<string> */
-    protected array $hidden = ['password'];
+    protected array $hidden = [
+        'password',
+    ];
 
     /** @var array<string, string> */
     protected array $casts = [
