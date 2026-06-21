@@ -23,22 +23,18 @@ use PhpCsFixer\Fixer\Whitespace\BlankLineBeforeStatementFixer;
 use PhpCsFixer\Fixer\Whitespace\MethodChainingIndentationFixer;
 use Symplify\EasyCodingStandard\Config\ECSConfig;
 
-return static function (ECSConfig $ecsConfig): void {
-    $ecsConfig->paths([
+return ECSConfig::configure()
+    ->withPaths([
         __DIR__ . '/app',
         __DIR__ . '/config',
         __DIR__ . '/test',
-    ]);
-
-    $ecsConfig->rulesWithConfiguration([
-        ArraySyntaxFixer::class => ['syntax' => 'short'],
-        ConcatSpaceFixer::class => ['spacing' => 'none'],
-        TrailingCommaInMultilineFixer::class => ['elements' => ['arrays']],
-        PhpUnitMethodCasingFixer::class => ['case' => 'snake_case'],
-        PhpUnitDataProviderStaticFixer::class => ['force' => true],
-    ]);
-
-    $ecsConfig->rules([
+    ])
+    ->withConfiguredRule(ArraySyntaxFixer::class, ['syntax' => 'short'])
+    ->withConfiguredRule(ConcatSpaceFixer::class, ['spacing' => 'none'])
+    ->withConfiguredRule(TrailingCommaInMultilineFixer::class, ['elements' => ['arrays']])
+    ->withConfiguredRule(PhpUnitMethodCasingFixer::class, ['case' => 'snake_case'])
+    ->withConfiguredRule(PhpUnitDataProviderStaticFixer::class, ['force' => true])
+    ->withRules([
         ArrayIndentationFixer::class,
         BlankLineBeforeStatementFixer::class,
         CastSpacesFixer::class,
@@ -55,4 +51,3 @@ return static function (ECSConfig $ecsConfig): void {
         SingleQuoteFixer::class,
         SingleSpaceAroundConstructFixer::class,
     ]);
-};
