@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\User\Domain\Exception;
 
-final class UserNotFoundException extends AbstractWithContextException implements DomainException
+use RuntimeException;
+
+final class UserNotFoundException extends RuntimeException implements DomainException
 {
     public static function byDocument(string $document): self
     {
