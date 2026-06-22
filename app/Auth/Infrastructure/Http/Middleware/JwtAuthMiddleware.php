@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Infrastructure\Http\Middleware;
 
-use App\Auth\Domain\AuthContract;
+use App\Auth\Domain\Contract\AuthContract;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Psr\Http\Server\{MiddlewareInterface, RequestHandlerInterface};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface};
@@ -28,14 +28,12 @@ final class JwtAuthMiddleware implements MiddlewareInterface
         $token = substr($header, 7);
 
         try {
-            $decoded = $this->auth->decode($token);
+            $userId = $this->auth->resolveUserId($token);
         } catch (Throwable) {
             return $this->unauthorized('Invalid or expired token.');
         }
 
-        $request = $request
-            ->withAttribute('user_id', $decoded->sub)
-            ->withAttribute('user_type', $decoded->type);
+        $request = $request->withAttribute('user_id', $userId);
 
         return $handler->handle($request);
     }

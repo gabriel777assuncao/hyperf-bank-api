@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Common\Infrastructure\Exception;
 
-use App\User\Domain\Exception\{DomainException, InvalidCredentialsException, UserAlreadyExistsException, UserNotFoundException};
+use App\Common\Domain\Exception\DomainException;
+use App\User\Domain\Exception\{InvalidCredentialsException, UserAlreadyExistsException, UserNotFoundException};
+use App\Wallet\Domain\Exception\{InsufficientBalanceException, WalletNotFoundException};
 use Hyperf\ExceptionHandler\ExceptionHandler;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Hyperf\Validation\ValidationException;
@@ -18,8 +20,10 @@ final class DomainExceptionHandler extends ExceptionHandler
     {
         $status = match (true) {
             $throwable instanceof UserNotFoundException => 404,
+            $throwable instanceof WalletNotFoundException => 404,
             $throwable instanceof InvalidCredentialsException => 401,
             $throwable instanceof UserAlreadyExistsException => 409,
+            $throwable instanceof InsufficientBalanceException => 422,
             $throwable instanceof InvalidArgumentException => 422,
             $throwable instanceof ValidationException => 422,
             default => 500,

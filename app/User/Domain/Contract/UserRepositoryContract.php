@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\User\Infrastructure\Contract;
+namespace App\User\Domain\Contract;
 
 use App\User\Domain\Entity\User;
 

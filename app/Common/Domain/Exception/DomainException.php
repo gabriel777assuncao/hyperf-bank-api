@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\User\Domain\Exception;
+namespace App\Common\Domain\Exception;
 
 interface DomainException
 {

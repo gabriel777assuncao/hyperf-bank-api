@@ -11,13 +11,13 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 
-use App\Auth\Domain\AuthContract;
-use App\Auth\Infrastructure\JwtAuthService;
+use App\Auth\Domain\Contract\AuthContract;
+use App\Auth\Infrastructure\Service\JwtAuthService;
 use App\Common\Infrastructure\Contract\DatabaseManagerContract;
 use App\Common\Infrastructure\DatabaseManager;
-use App\User\Infrastructure\Contract\UserRepositoryContract;
+use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Infrastructure\Repository\UserRepository;
-use App\Wallet\Infrastructure\Contract\WalletRepositoryContract;
+use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use App\Wallet\Infrastructure\Repository\WalletRepository;
 
 return [
