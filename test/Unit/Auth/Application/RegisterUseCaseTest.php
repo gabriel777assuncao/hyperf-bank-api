@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace HyperfTest\Unit\Auth\Application;
 
 use App\Auth\Application\RegisterUseCase;
-use App\Auth\Domain\AuthContract;
+use App\Auth\Domain\Contract\AuthContract;
 use App\User\Application\CreateUserService;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Enum\UserType;
@@ -54,9 +54,9 @@ final class RegisterUseCaseTest extends TestCase
             ->andReturn($user);
 
         $this->auth
-            ->shouldReceive('encode')
+            ->shouldReceive('generateToken')
             ->once()
-            ->with(['sub' => 'abc-123', 'type' => 'NORMAL'])
+            ->with($user)
             ->andReturn('jwt.token.here');
 
         $result = $this->useCase->execute([
@@ -98,14 +98,14 @@ final class RegisterUseCaseTest extends TestCase
             ->with($input)
             ->andReturn($user);
 
-        $this->auth->shouldReceive('encode')->andReturn('token');
+        $this->auth->shouldReceive('generateToken')->andReturn('token');
 
         $result = $this->useCase->execute($input);
 
         $this->assertSame($user, $result['user']);
     }
 
-    public function test_jwt_payload_contains_user_id_and_type(): void
+    public function test_generate_token_called_with_created_user(): void
     {
         $user = new User(
             id: 'user-uuid-1234',
@@ -120,9 +120,9 @@ final class RegisterUseCaseTest extends TestCase
             ->andReturn($user);
 
         $this->auth
-            ->shouldReceive('encode')
+            ->shouldReceive('generateToken')
             ->once()
-            ->with(['sub' => 'user-uuid-1234', 'type' => 'SHOPKEEPER'])
+            ->with($user)
             ->andReturn('token');
 
         $result = $this->useCase->execute([
@@ -136,7 +136,7 @@ final class RegisterUseCaseTest extends TestCase
         $this->assertSame('token', $result['token']);
     }
 
-    public function test_does_not_encode_jwt_before_creating_user(): void
+    public function test_does_not_generate_token_before_creating_user(): void
     {
         $user = new User(
             id: 'id',
@@ -157,10 +157,10 @@ final class RegisterUseCaseTest extends TestCase
             });
 
         $this->auth
-            ->shouldReceive('encode')
+            ->shouldReceive('generateToken')
             ->once()
             ->andReturnUsing(function () use (&$order): string {
-                $order[] = 'encode_jwt';
+                $order[] = 'generate_token';
 
                 return 'token';
             });
@@ -173,7 +173,7 @@ final class RegisterUseCaseTest extends TestCase
             'type' => 'NORMAL',
         ]);
 
-        $this->assertSame(['create_user', 'encode_jwt'], $order);
+        $this->assertSame(['create_user', 'generate_token'], $order);
     }
 
     public static function userTypeProvider(): Generator
@@ -183,7 +183,7 @@ final class RegisterUseCaseTest extends TestCase
     }
 
     #[DataProvider('userTypeProvider')]
-    public function test_passes_type_to_jwt_payload(string $type): void
+    public function test_generate_token_called_for_user_type(string $type): void
     {
         $user = new User(
             id: 'id',
@@ -198,9 +198,9 @@ final class RegisterUseCaseTest extends TestCase
             ->andReturn($user);
 
         $this->auth
-            ->shouldReceive('encode')
+            ->shouldReceive('generateToken')
             ->once()
-            ->with(['sub' => 'id', 'type' => $type])
+            ->with($user)
             ->andReturn('token');
 
         $result = $this->useCase->execute([

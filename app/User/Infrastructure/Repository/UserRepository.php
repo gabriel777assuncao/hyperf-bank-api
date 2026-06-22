@@ -7,7 +7,7 @@ namespace App\User\Infrastructure\Repository;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Enum\UserType;
 use App\User\Domain\ValueObject\{Cnpj, Cpf, Email, Password};
-use App\User\Infrastructure\Contract\UserRepositoryContract;
+use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Infrastructure\Model\UserModel;
 use DateTimeImmutable;
 use DateTimeInterface;

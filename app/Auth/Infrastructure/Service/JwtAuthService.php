@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace App\Auth\Infrastructure;
+namespace App\Auth\Infrastructure\Service;
 
-use App\Auth\Domain\AuthContract;
+use App\Auth\Domain\Contract\AuthContract;
+use App\User\Domain\Entity\User;
 use Firebase\JWT\{JWT, Key};
 use Hyperf\Contract\ConfigInterface;
-use stdClass;
 
 final class JwtAuthService implements AuthContract
 {
@@ -24,16 +24,24 @@ final class JwtAuthService implements AuthContract
         $this->ttl = (int) $config->get('jwt.ttl', 3600);
     }
 
-    public function encode(array $payload): string
+    public function generateToken(User $user): string
     {
-        $payload['iat'] = time();
-        $payload['exp'] = time() + $this->ttl;
+        $now = time();
+
+        $payload = [
+            'sub' => $user->id(),
+            'type' => $user->type()->value,
+            'iat' => $now,
+            'exp' => $now + $this->ttl,
+        ];
 
         return JWT::encode($payload, $this->secret, $this->algorithm);
     }
 
-    public function decode(string $token): stdClass
+    public function resolveUserId(string $token): string
     {
-        return JWT::decode($token, new Key($this->secret, $this->algorithm));
+        $decoded = JWT::decode($token, new Key($this->secret, $this->algorithm));
+
+        return (string) $decoded->sub;
     }
 }

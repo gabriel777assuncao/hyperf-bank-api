@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Auth\Application;
 
-use App\Auth\Domain\AuthContract;
+use App\Auth\Domain\Contract\AuthContract;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Exception\{InvalidCredentialsException, UserNotFoundException};
-use App\User\Infrastructure\Contract\UserRepositoryContract;
+use App\User\Domain\Contract\UserRepositoryContract;
 
 final class LoginUseCase
 {
@@ -28,17 +28,14 @@ final class LoginUseCase
         $user = $this->userRepository->findByDocument($document);
 
         if ($user === null) {
-            throw UserNotFoundException::byDocument($document);
+            throw new UserNotFoundException(sprintf('User with document "%s" not found.', $document));
         }
 
         if (! $user->password()->verify($data['password'])) {
             throw new InvalidCredentialsException();
         }
 
-        $token = $this->auth->encode([
-            'sub' => $user->id(),
-            'type' => $user->type()->value,
-        ]);
+        $token = $this->auth->generateToken($user);
 
         return [
             'token' => $token,

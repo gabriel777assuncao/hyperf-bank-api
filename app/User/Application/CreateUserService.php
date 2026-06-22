@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace App\User\Application;
 
 use App\Common\Infrastructure\Contract\DatabaseManagerContract;
+use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Enum\UserType;
 use App\User\Domain\Exception\UserAlreadyExistsException;
 use App\User\Domain\ValueObject\{Cnpj, Cpf, Email, Password};
-use App\User\Infrastructure\Contract\UserRepositoryContract;
-use App\Wallet\Infrastructure\Contract\WalletRepositoryContract;
+use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use Hyperf\Database\Exception\QueryException;
 use Ramsey\Uuid\Uuid;
 
@@ -58,7 +58,7 @@ class CreateUserService
             });
         } catch (QueryException $exception) {
             if ($this->isDuplicateEntry($exception)) {
-                throw UserAlreadyExistsException::conflict();
+                throw new UserAlreadyExistsException();
             }
 
             throw $exception;
@@ -70,17 +70,19 @@ class CreateUserService
     private function assertUnique(User $user): void
     {
         $cpf = $user->cpf();
+
         if ($cpf !== null && $this->userRepository->findByCpf($cpf->toString()) !== null) {
-            throw UserAlreadyExistsException::document($cpf->formatted());
+            throw new UserAlreadyExistsException(sprintf('A user with document "%s" already exists.', $cpf->formatted()));
         }
 
         $cnpj = $user->cnpj();
+
         if ($cnpj !== null && $this->userRepository->findByCnpj($cnpj->toString()) !== null) {
-            throw UserAlreadyExistsException::document($cnpj->formatted());
+            throw new UserAlreadyExistsException(sprintf('A user with document "%s" already exists.', $cnpj->formatted()));
         }
 
         if ($this->userRepository->findByEmail($user->email()->toString()) !== null) {
-            throw UserAlreadyExistsException::email($user->email()->toString());
+            throw new UserAlreadyExistsException(sprintf('A user with email "%s" already exists.', $user->email()->toString()));
         }
     }
 
