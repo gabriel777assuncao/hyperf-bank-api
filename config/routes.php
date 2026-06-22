@@ -10,10 +10,10 @@ Router::get('/health', function () {
 });
 
 Router::addGroup('/api/v1', function () {
-    Router::post('/register', 'App\Auth\Http\Controller\AuthController@register', [
+    Router::post('/register', 'App\Auth\Infrastructure\Http\Controller\AuthController@register', [
         'middleware' => [ValidationMiddleware::class],
     ]);
-    Router::post('/login', 'App\Auth\Http\Controller\AuthController@login', [
+    Router::post('/login', 'App\Auth\Infrastructure\Http\Controller\AuthController@login', [
         'middleware' => [ValidationMiddleware::class],
     ]);
 });

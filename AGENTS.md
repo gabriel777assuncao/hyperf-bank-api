@@ -74,14 +74,20 @@ Content-Type: application/json
 ## Estrutura de pastas
 app/
 ├── Common/
-│   ├── Contract/AuthContract.php
-│   ├── Http/
-│   │   ├── AbstractController.php
-│   │   └── Resource/AbstractResource.php
-│   ├── Exception/Handler/
-│   │   ├── AppExceptionHandler.php
-│   │   └── DomainExceptionHandler.php
-│   └── Model/Model.php
+│   ├── Domain/
+│   │   └── AuthContract.php
+│   ├── Application/
+│   └── Infrastructure/
+│       ├── Model.php
+│       ├── Http/
+│       │   ├── AbstractController.php
+│       │   └── AbstractResource.php
+│       ├── Exception/
+│       │   ├── AppExceptionHandler.php
+│       │   └── DomainExceptionHandler.php
+│       └── Listener/
+│           ├── DbQueryExecutedListener.php
+│           └── ResumeExitCoordinatorListener.php
 ├── User/
 │   ├── Domain/
 │   │   ├── Entity/User.php
@@ -91,34 +97,30 @@ app/
 │   │   ├── ValueObject/Password.php
 │   │   ├── Enum/UserType.php
 │   │   └── Exception/
+│   ├── Application/
 │   └── Infrastructure/
 │       ├── Contract/UserRepositoryContract.php
 │       ├── Repository/UserRepository.php
 │       └── Model/UserModel.php
 ├── Auth/
+│   ├── Domain/
 │   ├── Application/
-│   │   └── UseCase/
-│   │       ├── RegisterUseCase.php
-│   │       └── LoginUseCase.php
-│   ├── Infrastructure/
-│   │   └── JwtAuth.php
-│   └── Http/
-│       ├── Controller/AuthController.php
-│       ├── Resource/
-│       └── Middleware/JwtAuthMiddleware.php
-├── Transaction/
-│   ├── Application/Service/TransferService.php
-│   ├── Application/DTO/TransferInput.php
-│   ├── Domain/Entity/Transfer.php
-│   ├── Domain/Exception/
-│   ├── Infrastructure/Contract/
-│   ├── Infrastructure/External/
-│   ├── Infrastructure/Repository/
-│   ├── Infrastructure/Model/TransactionModel.php
-│   └── Http/
-└── Wallet/
-    ├── Domain/Entity/Wallet.php
-    ├── Domain/ValueObject/Money.php
-    ├── Infrastructure/
-    │   └── Model/WalletModel.php
-    └── Http/
+│   │   ├── RegisterUseCase.php
+│   │   └── LoginUseCase.php
+│   └── Infrastructure/
+│       ├── JwtAuthService.php
+│       └── Http/
+│           ├── Controller/AuthController.php
+│           ├── Request/
+│           ├── Resource/AuthResponseResource.php
+│           └── Middleware/JwtAuthMiddleware.php
+├── Wallet/
+│   ├── Domain/
+│   ├── Application/
+│   └── Infrastructure/
+│       └── Model/WalletModel.php
+└── Transaction/
+    ├── Domain/
+    ├── Application/
+    └── Infrastructure/
+        └── Model/TransactionModel.php

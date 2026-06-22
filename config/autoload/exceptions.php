@@ -9,7 +9,7 @@ declare(strict_types=1);
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
-use App\Common\Exception\Handler\{AppExceptionHandler, DomainExceptionHandler};
+use App\Common\Infrastructure\Exception\{AppExceptionHandler, DomainExceptionHandler};
 use Hyperf\HttpServer\Exception\Handler\HttpExceptionHandler;
 
 return [

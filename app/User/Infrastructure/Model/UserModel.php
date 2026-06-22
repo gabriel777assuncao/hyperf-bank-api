@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\User\Infrastructure\Model;
 
-use App\Common\Model\Model;
+use App\Common\Infrastructure\Model;
 
 class UserModel extends Model
 {

@@ -11,8 +11,8 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 
-use App\Auth\Infrastructure\Services\JwtAuthService;
-use App\Common\Contract\AuthContract;
+use App\Auth\Infrastructure\JwtAuthService;
+use App\Common\Domain\AuthContract;
 use App\User\Infrastructure\Contract\UserRepositoryContract;
 use App\User\Infrastructure\Repository\UserRepository;
 
