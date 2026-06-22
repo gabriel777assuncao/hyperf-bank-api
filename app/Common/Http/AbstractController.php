@@ -10,7 +10,7 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 
-namespace App\Shared\Http;
+namespace App\Common\Http;
 
 use Hyperf\Di\Annotation\Inject;
 use Hyperf\HttpServer\Contract\{RequestInterface, ResponseInterface};

@@ -2,20 +2,22 @@
 
 declare(strict_types=1);
 
-namespace App\Shared\Model;
+namespace App\Wallet\Infrastructure\Model;
 
-class Transaction extends Model
+use App\Common\Model\Model;
+
+class WalletModel extends Model
 {
     public bool $incrementing = false;
 
-    protected ?string $table = 'transactions';
+    protected ?string $table = 'wallets';
 
     /** @var array<string> */
-    protected array $fillable = ['id', 'payer_id', 'payee_id', 'value', 'status'];
+    protected array $fillable = ['id', 'user_id', 'balance'];
 
     /** @var array<string, string> */
     protected array $casts = [
-        'value' => 'integer',
+        'balance' => 'integer',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];

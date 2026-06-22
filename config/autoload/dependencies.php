@@ -10,5 +10,13 @@ declare(strict_types=1);
  * @contact  group@hyperf.io
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
+
+use App\Auth\Infrastructure\Services\JwtAuthService;
+use App\Common\Contract\AuthContract;
+use App\User\Infrastructure\Contract\UserRepositoryContract;
+use App\User\Infrastructure\Repository\UserRepository;
+
 return [
+    AuthContract::class => JwtAuthService::class,
+    UserRepositoryContract::class => UserRepository::class,
 ];

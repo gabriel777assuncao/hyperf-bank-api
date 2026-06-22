@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\Shared\Model;
+namespace App\User\Infrastructure\Model;
 
-class User extends Model
+use App\Common\Model\Model;
+
+class UserModel extends Model
 {
     public bool $incrementing = false;
 
@@ -15,6 +17,7 @@ class User extends Model
         'id',
         'full_name',
         'cpf',
+        'cnpj',
         'email',
         'password',
         'type',

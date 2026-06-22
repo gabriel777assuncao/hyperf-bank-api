@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Domain\Enum;
+namespace App\User\Domain\Enum;
 
 enum UserType: string
 {
-    case COMMON = 'COMMON';
-    case MERCHANT = 'MERCHANT';
+    case NORMAL = 'NORMAL';
+    case SHOPKEEPER = 'SHOPKEEPER';
 }

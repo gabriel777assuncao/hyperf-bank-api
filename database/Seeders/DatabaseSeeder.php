@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Shared\Model\Transaction;
-use App\Shared\Model\User;
-use App\Shared\Model\Wallet;
+use App\Transaction\Infrastructure\Model\TransactionModel;
+use App\User\Infrastructure\Model\UserModel;
+use App\Wallet\Infrastructure\Model\WalletModel;
 use Hyperf\Database\Seeders\Seeder;
 use Hyperf\DbConnection\Db;
 
@@ -16,9 +16,9 @@ class DatabaseSeeder extends Seeder
     {
         Db::connection()->getPdo()->exec('SET FOREIGN_KEY_CHECKS = 0');
 
-        Transaction::truncate();
-        Wallet::truncate();
-        User::truncate();
+        TransactionModel::truncate();
+        WalletModel::truncate();
+        UserModel::truncate();
 
         Db::connection()->getPdo()->exec('SET FOREIGN_KEY_CHECKS = 1');
 

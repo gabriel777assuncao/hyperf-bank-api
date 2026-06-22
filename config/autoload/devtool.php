@@ -27,13 +27,13 @@ return [
             'namespace' => 'App\Command',
         ],
         'controller' => [
-            'namespace' => 'App\Shared\Http\Controller',
+            'namespace' => 'App\Common\Http\Controller',
         ],
         'job' => [
             'namespace' => 'App\Job',
         ],
         'listener' => [
-            'namespace' => 'App\Shared\Listener',
+            'namespace' => 'App\Common\Listener',
         ],
         'middleware' => [
             'namespace' => 'App\Middleware',
