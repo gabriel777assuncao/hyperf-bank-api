@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Application;
 
-use App\Common\Domain\AuthContract;
+use App\Auth\Domain\AuthContract;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Enum\UserType;
 use App\User\Domain\Exception\UserAlreadyExistsException;

@@ -12,7 +12,7 @@ declare(strict_types=1);
  */
 
 use App\Auth\Infrastructure\JwtAuthService;
-use App\Common\Domain\AuthContract;
+use App\Auth\Domain\AuthContract;
 use App\User\Infrastructure\Contract\UserRepositoryContract;
 use App\User\Infrastructure\Repository\UserRepository;
 

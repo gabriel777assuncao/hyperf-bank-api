@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\Common\Domain;
+namespace App\Auth\Domain;
 
 use stdClass;
 

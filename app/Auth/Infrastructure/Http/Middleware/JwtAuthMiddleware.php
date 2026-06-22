@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Infrastructure\Http\Middleware;
 
-use App\Common\Domain\AuthContract;
+use App\Auth\Domain\AuthContract;
 use Hyperf\HttpMessage\Stream\SwooleStream;
 use Psr\Http\Server\{MiddlewareInterface, RequestHandlerInterface};
 use Psr\Http\Message\{ResponseInterface, ServerRequestInterface};

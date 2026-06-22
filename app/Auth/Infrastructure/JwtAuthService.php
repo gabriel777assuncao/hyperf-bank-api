@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Infrastructure;
 
-use App\Common\Domain\AuthContract;
+use App\Auth\Domain\AuthContract;
 use Firebase\JWT\{JWT, Key};
 use Hyperf\Contract\ConfigInterface;
 use stdClass;

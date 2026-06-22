@@ -75,7 +75,6 @@ Content-Type: application/json
 app/
 ├── Common/
 │   ├── Domain/
-│   │   └── AuthContract.php
 │   ├── Application/
 │   └── Infrastructure/
 │       ├── Model.php
@@ -104,6 +103,7 @@ app/
 │       └── Model/UserModel.php
 ├── Auth/
 │   ├── Domain/
+│   │   └── AuthContract.php
 │   ├── Application/
 │   │   ├── RegisterUseCase.php
 │   │   └── LoginUseCase.php
