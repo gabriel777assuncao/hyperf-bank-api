@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace Database\Seeders;
 
-use App\Shared\Model\Transaction;
-use App\Shared\Model\User;
+use App\Transaction\Infrastructure\Model\TransactionModel;
+use App\User\Infrastructure\Model\UserModel;
 use Hyperf\Database\Seeders\Seeder;
 
 class TransactionSeeder extends Seeder
 {
     public function run(): void
     {
-        $users = User::all()->pluck('id')->toArray();
+        $users = UserModel::all()->pluck('id')->toArray();
         $statuses = ['pending', 'completed', 'failed'];
 
         foreach (range(1, 5) as $i) {
@@ -23,7 +23,7 @@ class TransactionSeeder extends Seeder
                 $payee = $users[array_rand($users)];
             }
 
-            Transaction::create([
+            TransactionModel::create([
                 'id' => 'txn-' . uniqid(),
                 'payer_id' => $payer,
                 'payee_id' => $payee,
