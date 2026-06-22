@@ -10,9 +10,8 @@ final class Money
 {
     public function __construct(
         private readonly int $cents,
-        private readonly bool $validate = true,
     ) {
-        if ($validate && $cents < 0) {
+        if ($cents < 0) {
             throw new InvalidArgumentException('Money cannot be negative.');
         }
     }
@@ -24,7 +23,7 @@ final class Money
 
     public function subtract(self $other): self
     {
-        return new self($this->cents - $other->cents, validate: false);
+        return new self($this->cents - $other->cents);
     }
 
     public function greaterThanOrEqual(self $other): bool
