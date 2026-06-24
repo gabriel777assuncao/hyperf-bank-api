@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "c5d8a2e3-f1b4-4a6c-9d1e-7f3a8b2c0d5f",
 		"name": "Hyperf Bank API",
-		"description": "Banking API — registro, login, transferência",
+		"description": "Coleção simples do happy-path do desafio.\n\n## Pré-requisitos\n\n1. **Containers em pé** — `docker compose up -d` a partir da raiz do projeto.\n2. **Banco criado** — `docker exec hyperf-bank-api php bin/hyperf.php migrate:fresh --force`.\n3. **`APP_ENV=dev`** (padrão no `.env`) — transferências sempre autorizadas em dev via `StubAuthorizer`.\n\n## Observações\n\n- Cada novo usuário registrado nasce com carteira de **R$ 100.000,00** (bônus temporário de dev, configurável em `WalletRepository::create()`).\n- Execute as 5 requests **na ordem** — cada uma popula variáveis usadas pela próxima.\n- Se aparecer `409` no register (usuário já existe de um run anterior), faça `migrate:fresh --force` novamente ou simplesmente pule para o login (o usuário já existe).",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"variable": [
@@ -15,260 +15,229 @@
 			"key": "token",
 			"value": "",
 			"type": "string"
+		},
+		{
+			"key": "payer_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "payee_id",
+			"value": "",
+			"type": "string"
 		}
 	],
 	"item": [
 		{
-			"name": "Health",
-			"item": [
+			"name": "1. Health Check",
+			"event": [
 				{
-					"name": "Check",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status 200', () => pm.response.to.have.status(200));",
-									"pm.test('Body is OK', () => pm.expect(pm.response.text()).to.eql('OK'));"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "GET",
-						"header": [],
-						"url": {
-							"raw": "{{base_url}}/health",
-							"host": ["{{base_url}}"],
-							"path": ["health"]
-						}
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"pm.test('Body is OK', () => pm.expect(pm.response.text()).to.eql('OK'));"
+						],
+						"type": "text/javascript"
 					}
 				}
-			]
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"health"
+					]
+				}
+			},
+			"response": []
 		},
 		{
-			"name": "Auth",
-			"item": [
+			"name": "2. Register payer (NORMAL)",
+			"event": [
 				{
-					"name": "Register NORMAL (CPF)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status 201', () => pm.response.to.have.status(201));",
-									"const json = pm.response.json();",
-									"pm.test('Has token', () => pm.expect(json.data.token).to.be.a('string'));",
-									"pm.test('User type NORMAL', () => pm.expect(json.data.user.type).to.eql('NORMAL'));",
-									"pm.test('Has CPF', () => pm.expect(json.data.user.cpf).to.not.be.null);",
-									"pm.collectionVariables.set('token', json.data.token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 201', () => pm.response.to.have.status(201));",
+							"const json = pm.response.json();",
+							"pm.test('Has token', () => pm.expect(json.data.token).to.be.a('string').and.not.empty);",
+							"pm.test('Has user id', () => pm.expect(json.data.user.id).to.be.a('string').and.not.empty);",
+							"pm.collectionVariables.set('token', json.data.token);",
+							"pm.collectionVariables.set('payer_id', json.data.user.id);"
 						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"João Silva\",\n    \"cpf\": \"52998224725\",\n    \"email\": \"joao@test.com\",\n    \"password\": \"senha12345\",\n    \"type\": \"NORMAL\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/register",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "register"]
-						}
-					}
-				},
-				{
-					"name": "Register SHOPKEEPER (CNPJ)",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status 201', () => pm.response.to.have.status(201));",
-									"const json = pm.response.json();",
-									"pm.test('Has token', () => pm.expect(json.data.token).to.be.a('string'));",
-									"pm.test('User type SHOPKEEPER', () => pm.expect(json.data.user.type).to.eql('SHOPKEEPER'));",
-									"pm.test('Has CNPJ', () => pm.expect(json.data.user.cnpj).to.not.be.null);",
-									"pm.collectionVariables.set('token', json.data.token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"Maria Loja\",\n    \"cnpj\": \"11222333000181\",\n    \"email\": \"maria@test.com\",\n    \"password\": \"senha12345\",\n    \"type\": \"SHOPKEEPER\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/register",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "register"]
-						}
-					}
-				},
-				{
-					"name": "Register CPF + CNPJ",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status 201', () => pm.response.to.have.status(201));",
-									"const json = pm.response.json();",
-									"pm.test('Has CPF and CNPJ', () => {",
-									"    pm.expect(json.data.user.cpf).to.not.be.null;",
-									"    pm.expect(json.data.user.cnpj).to.not.be.null;",
-									"});",
-									"pm.collectionVariables.set('token', json.data.token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"Pedro Ambos\",\n    \"cpf\": \"28001238938\",\n    \"cnpj\": \"60765412000144\",\n    \"email\": \"pedro@test.com\",\n    \"password\": \"senha12345\",\n    \"type\": \"NORMAL\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/register",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "register"]
-						}
-					}
-				},
-				{
-					"name": "Register sem documento -> 422",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status 422', () => pm.response.to.have.status(422));",
-									"const json = pm.response.json();",
-									"pm.test('Has validation error', () => pm.expect(json.error).to.be.a('string'));"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"full_name\": \"Sem Documento\",\n    \"email\": \"semdoc@test.com\",\n    \"password\": \"senha12345\",\n    \"type\": \"NORMAL\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/register",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "register"]
-						}
-					}
-				},
-				{
-					"name": "Login por CPF",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status 200', () => pm.response.to.have.status(200));",
-									"const json = pm.response.json();",
-									"pm.test('Has token', () => pm.expect(json.data.token).to.be.a('string'));",
-									"pm.test('Has user', () => pm.expect(json.data.user.id).to.be.a('string'));",
-									"pm.collectionVariables.set('token', json.data.token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"document\": \"52998224725\",\n    \"password\": \"senha12345\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "login"]
-						}
-					}
-				},
-				{
-					"name": "Login por CNPJ",
-					"event": [
-						{
-							"listen": "test",
-							"script": {
-								"exec": [
-									"pm.test('Status 200', () => pm.response.to.have.status(200));",
-									"const json = pm.response.json();",
-									"pm.test('Has token', () => pm.expect(json.data.token).to.be.a('string'));",
-									"pm.test('Has user', () => pm.expect(json.data.user.id).to.be.a('string'));",
-									"pm.collectionVariables.set('token', json.data.token);"
-								],
-								"type": "text/javascript"
-							}
-						}
-					],
-					"request": {
-						"method": "POST",
-						"header": [
-							{
-								"key": "Content-Type",
-								"value": "application/json"
-							}
-						],
-						"body": {
-							"mode": "raw",
-							"raw": "{\n    \"document\": \"11222333000181\",\n    \"password\": \"senha12345\"\n}"
-						},
-						"url": {
-							"raw": "{{base_url}}/api/v1/login",
-							"host": ["{{base_url}}"],
-							"path": ["api", "v1", "login"]
-						}
+						"type": "text/javascript"
 					}
 				}
-			]
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"full_name\": \"João Silva\",\n    \"cpf\": \"52601815906\",\n    \"email\": \"payer@example.com\",\n    \"password\": \"password123\",\n    \"type\": \"NORMAL\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/register",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "3. Register payee (NORMAL)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 201', () => pm.response.to.have.status(201));",
+							"const json = pm.response.json();",
+							"pm.test('Has user id', () => pm.expect(json.data.user.id).to.be.a('string').and.not.empty);",
+							"pm.collectionVariables.set('payee_id', json.data.user.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"full_name\": \"Maria Santos\",\n    \"cpf\": \"08301661305\",\n    \"email\": \"payee@example.com\",\n    \"password\": \"password123\",\n    \"type\": \"NORMAL\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/register",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "4. Login payer",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 200', () => pm.response.to.have.status(200));",
+							"const json = pm.response.json();",
+							"pm.test('Has token', () => pm.expect(json.data.token).to.be.a('string').and.not.empty);",
+							"pm.test('Has user', () => pm.expect(json.data.user.id).to.be.a('string').and.not.empty);",
+							"pm.collectionVariables.set('token', json.data.token);",
+							"pm.collectionVariables.set('payer_id', json.data.user.id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"document\": \"52601815906\",\n    \"password\": \"password123\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/login",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "5. Transfer (happy path)",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test('Status 201', () => pm.response.to.have.status(201));",
+							"const json = pm.response.json();",
+							"pm.test('Has transaction id', () => pm.expect(json.data.id).to.be.a('string').and.not.empty);",
+							"pm.test('Status completed', () => pm.expect(json.data.status).to.eql('completed'));",
+							"pm.test('Payer matches', () => pm.expect(json.data.payer_id).to.eql(pm.collectionVariables.get('payer_id')));",
+							"pm.test('Payee matches', () => pm.expect(json.data.payee_id).to.eql(pm.collectionVariables.get('payee_id')));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer {{token}}"
+					},
+					{
+						"key": "Idempotency-Key",
+						"value": "{{$guid}}"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"payee\": \"{{payee_id}}\",\n    \"value\": 100.00\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/transfer",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"transfer"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
