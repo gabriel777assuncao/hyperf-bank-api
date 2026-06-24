@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\Auth\Application;
+namespace App\Auth\Application\UseCases;
 
 use App\Auth\Domain\Contract\AuthContract;
-use App\User\Application\CreateUserService;
+use App\User\Application\UseCases\CreateUserUseCase;
 use App\User\Domain\Entity\User;
 
 final readonly class RegisterUseCase
 {
     public function __construct(
-        private CreateUserService $createUserService,
+        private CreateUserUseCase $createUserService,
         private AuthContract $auth,
     ) {
     }

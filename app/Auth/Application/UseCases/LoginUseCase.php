@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace App\Auth\Application;
+namespace App\Auth\Application\UseCases;
 
 use App\Auth\Domain\Contract\AuthContract;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Exception\{InvalidCredentialsException, UserNotFoundException};
 use App\User\Domain\Contract\UserRepositoryContract;
 
-final class LoginUseCase
+final readonly class LoginUseCase
 {
     public function __construct(
-        private readonly UserRepositoryContract $userRepository,
-        private readonly AuthContract           $auth,
+        private UserRepositoryContract $userRepository,
+        private AuthContract $auth,
     ) {
     }
 

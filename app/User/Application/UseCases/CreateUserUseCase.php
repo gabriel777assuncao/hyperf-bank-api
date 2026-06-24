@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace App\User\Application;
+namespace App\User\Application\UseCases;
 
 use App\Common\Infrastructure\Contract\DatabaseManagerContract;
 use App\User\Domain\Contract\UserRepositoryContract;
@@ -14,14 +14,14 @@ use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use Hyperf\Database\Exception\QueryException;
 use Ramsey\Uuid\Uuid;
 
-class CreateUserService
+class CreateUserUseCase
 {
     private const DUPLICATE_ENTRY_CODE = 23000;
 
     public function __construct(
-            private readonly UserRepositoryContract $userRepository,
-            private readonly WalletRepositoryContract $walletRepository,
-            private readonly DatabaseManagerContract $databaseManager,
+        private readonly UserRepositoryContract $userRepository,
+        private readonly WalletRepositoryContract $walletRepository,
+        private readonly DatabaseManagerContract $databaseManager,
     ) {
     }
 
@@ -31,13 +31,8 @@ class CreateUserService
         $password = new Password($data['password']);
         $type = UserType::from($data['type']);
 
-        $cpf = isset($data['cpf']) && $data['cpf'] !== ''
-                ? new Cpf($data['cpf'])
-                : null;
-
-        $cnpj = isset($data['cnpj']) && $data['cnpj'] !== ''
-                ? new Cnpj($data['cnpj'])
-                : null;
+        $cpf = isset($data['cpf']) && $data['cpf'] !== '' ? new Cpf($data['cpf']) : null;
+        $cnpj = isset($data['cnpj']) && $data['cnpj'] !== '' ? new Cnpj($data['cnpj']) : null;
 
         $user = new User(
                 id: (string) Uuid::uuid4(),
