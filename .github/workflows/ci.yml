@@ -112,9 +112,8 @@ jobs:
       DB_COLLATION: utf8mb4_unicode_ci
       DB_PREFIX: ""
       REDIS_HOST: 127.0.0.1
-      REDIS_AUTH: testing
       REDIS_PORT: 6379
-      REDIS_DB: 0
+      REDIS_DB: 1
       RABBITMQ_HOST: 127.0.0.1
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: guest
@@ -133,5 +132,11 @@ jobs:
       - name: Install dependencies
         run: composer install --no-progress --no-interaction
 
-      - name: Run tests
-        run: vendor/bin/phpunit --colors=always
+      - name: Run migrations
+        run: php bin/hyperf.php migrate --force
+
+      - name: Run unit tests
+        run: composer test:unit
+
+      - name: Run integration tests
+        run: vendor/bin/co-phpunit -c phpunit.integration.xml --colors=always
