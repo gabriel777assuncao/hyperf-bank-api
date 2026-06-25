@@ -17,14 +17,29 @@ final class TransferRulesTest extends TestCase
         $user = $this->createUser();
         $this->fundWallet($user->id, 10000);
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => $user->id, 'value' => 50.00],
-            $this->authHeadersFor($user),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $user->id,
+            'payee' => $user->id,
+            'value' => 50.00,
+        ]);
 
         $response->assertUnprocessable();
-        $this->assertArrayHasKey('error', $response->json());
+        $this->assertArrayHasKey('errors', $response->json());
+    }
+
+    public function test_value_exceeding_max_returns_422(): void
+    {
+        $payer = $this->createUser();
+        $payee = $this->createUser();
+
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $payer->id,
+            'payee' => $payee->id,
+            'value' => 100000000.00,
+        ]);
+
+        $response->assertUnprocessable();
+        $this->assertArrayHasKey('errors', $response->json());
     }
 
     public function test_shopkeeper_cannot_send_transfer(): void
@@ -32,11 +47,11 @@ final class TransferRulesTest extends TestCase
         $shopkeeper = $this->createShopkeeper();
         $payee = $this->createUser();
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => $payee->id, 'value' => 50.00],
-            $this->authHeadersFor($shopkeeper),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $shopkeeper->id,
+            'payee' => $payee->id,
+            'value' => 50.00,
+        ]);
 
         $response->assertUnprocessable();
         $this->assertArrayHasKey('error', $response->json());
@@ -49,11 +64,11 @@ final class TransferRulesTest extends TestCase
 
         $this->fundWallet($payer->id, 1000);
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => $payee->id, 'value' => 100.00],
-            $this->authHeadersFor($payer),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $payer->id,
+            'payee' => $payee->id,
+            'value' => 100.00,
+        ]);
 
         $response->assertUnprocessable();
 
@@ -74,11 +89,11 @@ final class TransferRulesTest extends TestCase
         $payer = $this->createUser();
         $this->fundWallet($payer->id, 10000);
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee', 'value' => 50.00],
-            $this->authHeadersFor($payer),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $payer->id,
+            'payee' => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            'value' => 50.00,
+        ]);
 
         $response->assertNotFound();
         $this->assertArrayHasKey('error', $response->json());
@@ -89,14 +104,13 @@ final class TransferRulesTest extends TestCase
         $payer = $this->createUser();
         $payee = $this->createUser();
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => $payee->id, 'value' => -10],
-            $this->authHeadersFor($payer),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $payer->id,
+            'payee' => $payee->id,
+            'value' => -10,
+        ]);
 
         $response->assertUnprocessable();
-
         $this->assertArrayHasKey('errors', $response->json());
     }
 }

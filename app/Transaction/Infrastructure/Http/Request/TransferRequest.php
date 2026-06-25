@@ -14,13 +14,14 @@ final class TransferRequest extends FormRequest
     }
 
     /**
-     * @return array<string, array<int, string>>
+     * @return array<string, array<int, mixed>>
      */
     public function rules(): array
     {
         return [
-            'payee' => ['required', 'string', 'uuid'],
-            'value' => ['required', 'numeric', 'gt:0'],
+            'payer' => ['required', 'string', 'uuid'],
+            'payee' => ['required', 'string', 'uuid', 'different:payer'],
+            'value' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
         ];
     }
 
@@ -30,10 +31,14 @@ final class TransferRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'payer.required' => 'The payer field is required.',
+            'payer.uuid' => 'The payer must be a valid UUID.',
             'payee.required' => 'The payee field is required.',
             'payee.uuid' => 'The payee must be a valid UUID.',
+            'payee.different' => 'The payee must be different from the payer.',
             'value.required' => 'The value field is required.',
             'value.gt' => 'The value must be greater than zero.',
+            'value.max' => 'The value must not exceed '.self::MAX_VALUE.'.',
         ];
     }
 }

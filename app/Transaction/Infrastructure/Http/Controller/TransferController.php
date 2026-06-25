@@ -20,12 +20,11 @@ final class TransferController extends AbstractController
 
     public function store(TransferRequest $request): PsrResponseInterface
     {
-        $payerId = (string) $request->getAttribute('user_id');
         $amount = new Money((int) round((float) $request->input('value') * 100));
 
         $transaction = $this->transferUseCase->execute(
-            payerId: $payerId,
-            payeeId: $request->input('payee'),
+            payerId: (string) $request->input('payer'),
+            payeeId: (string) $request->input('payee'),
             amount: $amount,
         );
 

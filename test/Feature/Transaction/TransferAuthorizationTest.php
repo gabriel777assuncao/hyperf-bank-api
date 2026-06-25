@@ -20,11 +20,11 @@ final class TransferAuthorizationTest extends TestCase
 
         $this->fakeAuthorizer->deny();
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => $payee->id, 'value' => 100.00],
-            $this->authHeadersFor($payer),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $payer->id,
+            'payee' => $payee->id,
+            'value' => 100.00,
+        ]);
 
         $response->assertUnprocessable();
         $this->assertArrayHasKey('error', $response->json());
@@ -48,11 +48,11 @@ final class TransferAuthorizationTest extends TestCase
 
         $this->fakeAuthorizer->makeUnavailable();
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => $payee->id, 'value' => 100.00],
-            $this->authHeadersFor($payer),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $payer->id,
+            'payee' => $payee->id,
+            'value' => 100.00,
+        ]);
 
         $response->assertStatus(503);
         $this->assertArrayHasKey('error', $response->json());

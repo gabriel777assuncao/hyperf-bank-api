@@ -22,9 +22,9 @@ use App\Wallet\Domain\Entity\Wallet;
 use App\Wallet\Domain\Exception\InsufficientBalanceException;
 use App\Transaction\Domain\Entity\Transaction;
 use App\Wallet\Domain\ValueObject\Money;
-use Hyperf\Contract\StdoutLoggerInterface;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 
 /**
@@ -45,7 +45,7 @@ final class TransferUseCaseTest extends TestCase
 
     private TransferPublisherContract&MockObject $publisher;
 
-    private StdoutLoggerInterface&MockObject $logger;
+    private LoggerInterface&MockObject $logger;
 
     private TransferUseCase $useCase;
 
@@ -57,7 +57,7 @@ final class TransferUseCaseTest extends TestCase
         $this->authorizer = $this->createMock(AuthorizerContract::class);
         $this->databaseManager = $this->createMock(DatabaseManagerContract::class);
         $this->publisher = $this->createMock(TransferPublisherContract::class);
-        $this->logger = $this->createMock(StdoutLoggerInterface::class);
+        $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->databaseManager
             ->method('transaction')

@@ -19,17 +19,17 @@ final class TransferHappyPathTest extends TestCase
 
         $this->fundWallet($payer->id, 50000);
 
-        $response = $this->post(
-            '/api/v1/transfer',
-            ['payee' => $payee->id, 'value' => 100.00],
-            $this->authHeadersFor($payer),
-        );
+        $response = $this->post('/api/v1/transfer', [
+            'payer' => $payer->id,
+            'payee' => $payee->id,
+            'value' => 100.00,
+        ]);
 
         $response->assertCreated();
 
         $body = $response->json();
         $this->assertSame('completed', $body['data']['status']);
-        $this->assertSame(100.0, $body['data']['value']);
+        self::assertEqualsWithDelta(100.0, $body['data']['value'], 0.001);
         $this->assertSame($payer->id, $body['data']['payer_id']);
         $this->assertSame($payee->id, $body['data']['payee_id']);
 

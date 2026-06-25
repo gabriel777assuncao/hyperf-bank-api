@@ -21,8 +21,6 @@ abstract class TestCase extends HyperfTestCase
 
     protected FakeAuthorizer $fakeAuthorizer;
 
-    private static bool $booted = false;
-
     private static InMemoryTransferPublisher $sharedPublisher;
 
     private static FakeAuthorizer $sharedAuthorizer;
@@ -31,8 +29,6 @@ abstract class TestCase extends HyperfTestCase
     {
         parent::setUp();
         $this->bootFakes();
-        $this->publisher = self::$sharedPublisher;
-        $this->fakeAuthorizer = self::$sharedAuthorizer;
         $this->publisher->reset();
         $this->fakeAuthorizer->reset();
         $this->truncateDatabase();
@@ -41,18 +37,19 @@ abstract class TestCase extends HyperfTestCase
 
     private function bootFakes(): void
     {
-        if (self::$booted) {
-            return;
+        if (! isset(self::$sharedPublisher)) {
+            self::$sharedPublisher = new InMemoryTransferPublisher();
         }
-
-        self::$sharedPublisher = new InMemoryTransferPublisher();
-        self::$sharedAuthorizer = new FakeAuthorizer();
+        if (! isset(self::$sharedAuthorizer)) {
+            self::$sharedAuthorizer = new FakeAuthorizer();
+        }
 
         $container = ApplicationContext::getContainer();
         $container->set(TransferPublisherContract::class, self::$sharedPublisher);
         $container->set(AuthorizerContract::class, self::$sharedAuthorizer);
 
-        self::$booted = true;
+        $this->publisher = self::$sharedPublisher;
+        $this->fakeAuthorizer = self::$sharedAuthorizer;
     }
 
     private function truncateDatabase(): void
