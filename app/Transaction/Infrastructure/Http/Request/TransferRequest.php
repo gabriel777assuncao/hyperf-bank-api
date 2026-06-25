@@ -21,7 +21,7 @@ final class TransferRequest extends FormRequest
         return [
             'payer' => ['required', 'string', 'uuid'],
             'payee' => ['required', 'string', 'uuid', 'different:payer'],
-            'value' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'value' => ['required', 'numeric', 'min:0.01'],
         ];
     }
 
@@ -38,7 +38,6 @@ final class TransferRequest extends FormRequest
             'payee.different' => 'The payee must be different from the payer.',
             'value.required' => 'The value field is required.',
             'value.gt' => 'The value must be greater than zero.',
-            'value.max' => 'The value must not exceed '.self::MAX_VALUE.'.',
         ];
     }
 }
