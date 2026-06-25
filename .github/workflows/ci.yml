@@ -1,0 +1,156 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker compose -f docker-compose.ci.yml build --no-cache app
+
+      - name: Start containers
+        run: docker compose -f docker-compose.ci.yml up -d
+
+      - name: Wait for services
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:9501/health > /dev/null 2>&1; then
+              echo "Service is up!"
+              break
+            fi
+            echo "Waiting for service... ($i/30)"
+            sleep 2
+          done
+
+      - name: Health check
+        run: |
+          curl -f http://localhost:9501/health
+          echo ""
+          echo "Health check passed!"
+
+      - name: Show logs on failure
+        if: failure()
+        run: docker compose -f docker-compose.ci.yml logs app
+
+      - name: Stop containers
+        if: always()
+        run: docker compose -f docker-compose.ci.yml down
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: swoole
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --no-progress --no-interaction
+
+      - name: ECS Check
+        run: vendor/bin/ecs check
+
+      - name: PHPStan
+        run: composer analyse
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: [build, lint]
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: testing
+          MYSQL_DATABASE: testing
+          MYSQL_USER: testing
+          MYSQL_PASSWORD: testing
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+      rabbitmq:
+        image: rabbitmq:3-management
+        ports:
+          - 5672:5672
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      APP_ENV: testing
+      DB_DRIVER: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: testing
+      DB_USERNAME: testing
+      DB_PASSWORD: testing
+      DB_CHARSET: utf8mb4
+      DB_COLLATION: utf8mb4_unicode_ci
+      DB_PREFIX: ""
+      REDIS_HOST: 127.0.0.1
+      REDIS_PORT: 6379
+      REDIS_DB: 1
+      RABBITMQ_HOST: 127.0.0.1
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: guest
+      RABBITMQ_PASSWORD: guest
+      RABBITMQ_VHOST: /
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: swoole
+          tools: composer
+
+      - name: Install dependencies
+        run: composer install --no-progress --no-interaction
+
+      - name: Run migrations
+        run: php bin/hyperf.php migrate --force
+
+      - name: Run unit tests
+        run: composer test:unit
+
+      - name: Run integration tests
+        run: |
+          status=0
+          vendor/bin/co-phpunit -c phpunit.integration.xml --colors=always --log-junit junit.xml || status=$?
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+          if [ "$status" -eq 139 ]; then
+            echo "::warning::Swoole segfault no shutdown (exit 139). Os testes já rodaram; validando pelo relatorio JUnit."
+            php -r '$x = @simplexml_load_file("junit.xml"); if ($x === false) { fwrite(STDERR, "junit.xml ausente ou invalido\n"); exit(1); } $n = 0; foreach ($x->xpath("//testsuite") as $s) { $n += (int) $s["failures"] + (int) $s["errors"]; } fwrite(STDERR, "failures+errors=$n\n"); exit($n > 0 ? 1 : 0);'
+          else
+            exit "$status"
+          fi
