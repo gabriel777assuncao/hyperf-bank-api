@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Auth\Infrastructure\Http\Controller;
 
-use App\Auth\Application\{LoginUseCase, RegisterUseCase};
+use App\Auth\Application\UseCases\{LoginUseCase, RegisterUseCase};
 use App\Auth\Infrastructure\Http\Request\{LoginRequest, RegisterRequest};
 use App\Auth\Infrastructure\Http\Resource\AuthResponseResource;
 use App\Common\Infrastructure\Http\AbstractController;

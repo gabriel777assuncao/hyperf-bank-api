@@ -10,8 +10,6 @@ interface WalletRepositoryContract
 {
     public function create(string $userId): void;
 
-    public function findByUserId(string $userId): ?Wallet;
-
     public function findByUserIdForUpdate(string $userId): Wallet;
 
     public function save(Wallet $wallet): void;

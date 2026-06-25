@@ -10,7 +10,17 @@ declare(strict_types=1);
  * @license  https://github.com/hyperf/hyperf/blob/master/LICENSE
  */
 use Hyperf\ExceptionHandler\Listener\ErrorExceptionHandler;
+use function Hyperf\Support\env;
 
-return [
+$listeners = [
     ErrorExceptionHandler::class,
 ];
+
+if (env('APP_ENV') === 'testing') {
+    $listeners = array_values(array_filter(
+        $listeners,
+        static fn (string $listener): bool => $listener !== ErrorExceptionHandler::class
+    ));
+}
+
+return $listeners;

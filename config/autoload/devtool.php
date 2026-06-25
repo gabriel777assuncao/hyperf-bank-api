@@ -14,10 +14,10 @@ return [
     'generator' => [
         'amqp' => [
             'consumer' => [
-                'namespace' => 'App\Amqp\Consumer',
+                'namespace' => 'App\Transaction\Infrastructure\Amqp\Consumer',
             ],
             'producer' => [
-                'namespace' => 'App\Amqp\Producer',
+                'namespace' => 'App\Transaction\Infrastructure\Amqp\Producer',
             ],
         ],
         'aspect' => [

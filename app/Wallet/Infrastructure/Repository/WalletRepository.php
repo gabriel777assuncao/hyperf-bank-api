@@ -22,17 +22,6 @@ final class WalletRepository implements WalletRepositoryContract
         ]);
     }
 
-    public function findByUserId(string $userId): ?Wallet
-    {
-        $wallet = WalletModel::query()->where('user_id', $userId)->first();
-
-        if ($wallet === null) {
-            return null;
-        }
-
-        return $this->toEntity($wallet);
-    }
-
     public function findByUserIdForUpdate(string $userId): Wallet
     {
         $wallet = WalletModel::query()

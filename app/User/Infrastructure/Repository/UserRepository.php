@@ -6,14 +6,23 @@ namespace App\User\Infrastructure\Repository;
 
 use App\User\Domain\Entity\User;
 use App\User\Domain\Enum\UserType;
+use App\User\Domain\Exception\UserAlreadyExistsException;
 use App\User\Domain\ValueObject\{Cnpj, Cpf, Email, Password};
 use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Infrastructure\Model\UserModel;
 use DateTimeImmutable;
 use DateTimeInterface;
+use Hyperf\Database\Exception\QueryException;
 
 final class UserRepository implements UserRepositoryContract
 {
+    /**
+     * Código de erro específico do MySQL para violação de UNIQUE (ER_DUP_ENTRY).
+     * Usamos o código do driver (errorInfo[1]), e não o SQLSTATE 23000, pois
+     * 23000 cobre toda a classe de integrity violation (FK, NOT NULL, etc).
+     */
+    private const MYSQL_DUPLICATE_ENTRY = 1062;
+
     public function findById(string $id): ?User
     {
         $user = UserModel::query()->find($id);
@@ -74,17 +83,30 @@ final class UserRepository implements UserRepositoryContract
 
     public function save(User $user): void
     {
-        UserModel::query()->updateOrCreate(
-            ['id' => $user->id()],
-            [
-                'full_name' => $user->fullName(),
-                'cpf' => $user->cpf()?->toString(),
-                'cnpj' => $user->cnpj()?->toString(),
-                'email' => $user->email()->toString(),
-                'password' => $user->password()->toString(),
-                'type' => $user->type()->value,
-            ],
-        );
+        try {
+            UserModel::query()->updateOrCreate(
+                ['id' => $user->id()],
+                [
+                    'full_name' => $user->fullName(),
+                    'cpf' => $user->cpf()?->toString(),
+                    'cnpj' => $user->cnpj()?->toString(),
+                    'email' => $user->email()->toString(),
+                    'password' => $user->password()->toString(),
+                    'type' => $user->type()->value,
+                ],
+            );
+        } catch (QueryException $exception) {
+            if ($this->isDuplicateEntry($exception)) {
+                throw new UserAlreadyExistsException();
+            }
+
+            throw $exception;
+        }
+    }
+
+    private function isDuplicateEntry(QueryException $exception): bool
+    {
+        return ($exception->errorInfo[1] ?? null) === self::MYSQL_DUPLICATE_ENTRY;
     }
 
     private function toEntity(UserModel $user): User

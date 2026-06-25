@@ -4,13 +4,13 @@ declare(strict_types=1);
 
 namespace HyperfTest\Unit\User\Application;
 
-use App\User\Application\CreateUserService;
+use App\Common\Infrastructure\Contract\DatabaseManagerContract;
+use App\User\Application\UseCases\CreateUserUseCase;
+use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Enum\UserType;
 use App\User\Domain\Exception\UserAlreadyExistsException;
 use App\User\Domain\ValueObject\{Email, Password};
-use App\Common\Infrastructure\Contract\DatabaseManagerContract;
-use App\User\Domain\Contract\UserRepositoryContract;
 use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use Generator;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -19,14 +19,14 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @internal
- * @covers \App\User\Application\CreateUserService
+ * @covers \App\User\Application\UseCases\CreateUserUseCase
  */
 final class CreateUserServiceTest extends TestCase
 {
     private UserRepositoryContract&MockObject $userRepository;
     private WalletRepositoryContract&MockObject $walletRepository;
     private DatabaseManagerContract&MockObject $databaseManager;
-    private CreateUserService $service;
+    private CreateUserUseCase $service;
 
     protected function setUp(): void
     {
@@ -38,7 +38,7 @@ final class CreateUserServiceTest extends TestCase
             ->method('transaction')
             ->willReturnCallback(fn (callable $callback) => $callback());
 
-        $this->service = new CreateUserService(
+        $this->service = new CreateUserUseCase(
             $this->userRepository,
             $this->walletRepository,
             $this->databaseManager,

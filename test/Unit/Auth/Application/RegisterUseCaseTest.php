@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace HyperfTest\Unit\Auth\Application;
 
-use App\Auth\Application\RegisterUseCase;
+use App\Auth\Application\UseCases\RegisterUseCase;
 use App\Auth\Domain\Contract\AuthContract;
-use App\User\Application\CreateUserService;
+use App\User\Application\UseCases\CreateUserUseCase;
 use App\User\Domain\Entity\User;
 use App\User\Domain\Enum\UserType;
 use App\User\Domain\ValueObject\{Email, Password};
@@ -18,17 +18,17 @@ use ReflectionClass;
 
 /**
  * @internal
- * @covers \App\Auth\Application\RegisterUseCase
+ * @covers \App\Auth\Application\UseCases\RegisterUseCase
  */
 final class RegisterUseCaseTest extends TestCase
 {
-    private CreateUserService $createUserService;
+    private CreateUserUseCase $createUserService;
     private AuthContract $auth;
     private RegisterUseCase $useCase;
 
     protected function setUp(): void
     {
-        $this->createUserService = Mockery::mock(CreateUserService::class);
+        $this->createUserService = Mockery::mock(CreateUserUseCase::class);
         $this->auth = Mockery::mock(AuthContract::class);
         $this->useCase = new RegisterUseCase($this->createUserService, $this->auth);
     }

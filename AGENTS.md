@@ -3,7 +3,8 @@
 ## Stack
 - PHP 8.3 + Hyperf 3.x (Swoole)
 - MySQL 8 — dados relacionais
-- Redis — cache e sessão
+- Redis — cache e idempotência
+- RabbitMQ (AMQP) — mensageria para notificação assíncrona
 - Docker + docker-compose
 - PHPStan + ECS (Easy Coding Standard)
 - firebase/php-jwt para autenticação
@@ -27,18 +28,18 @@ Modular Layered Architecture — monolito modular com inversão de dependência 
 - **Http** → controllers, requests (FormRequest), exception handler
 
 ### Regra de dependência
-- Application depende de interfaces definidas em Infrastructure/Contract
+- Application depende de interfaces (Contracts) definidas em Domain/Contract (e Common/Infrastructure/Contract)
 - Application e Domain não importam nada de Hyperf
 - Http depende apenas de Application
 - Infrastructure implementa os contratos — nunca é importada por Application diretamente
 - Common contém apenas abstrações e contratos cross-module
 
 ## Regras de negócio críticas
-1. Lojista (type = merchant) NUNCA envia transferência
-2. Saldo insuficiente — verificar antes de abrir transação
+1. Lojista (UserType::SHOPKEEPER) NUNCA envia transferência; usuário comum é NORMAL
+2. Saldo insuficiente — verificado em Wallet::debit (invariante de domínio)
 3. Autorizador externo consultado ANTES de abrir Db::transaction
-4. Db::transaction envolve: débito payer + crédito payee + persist Transfer
-5. Notificação disparada com Coroutine::create() APÓS o commit
+4. Db::transaction envolve: lock ordenado das carteiras + débito payer + crédito payee + persist Transaction
+5. Notificação publicada em fila AMQP (RabbitMQ) APÓS o commit; consumer chama o notificador externo com ACK/NACK
 6. Money sempre em centavos (BIGINT) — jamais float
 
 ## Serviços externos
@@ -46,25 +47,28 @@ Modular Layered Architecture — monolito modular com inversão de dependência 
 - Notificador: POST https://util.devi.tools/api/v1/notify
 
 ## Endpoints
+Base: `/api/v1`.
+
 ### Autenticação
-POST /register
+POST /api/v1/register
 Content-Type: application/json
-{ "full_name": "João Silva", "document": "12345678901", "email": "joao@example.com", "password": "password123", "type": "COMMON" }
+{ "full_name": "João Silva", "cpf": "123.456.789-09", "cnpj": null, "email": "joao@example.com", "password": "password123", "type": "NORMAL" }
 
-POST /login
+POST /api/v1/login
 Content-Type: application/json
-{ "document": "12345678901", "password": "password123" }
+{ "document": "123.456.789-09", "password": "password123" }
 
-### Transferência (protegido — requer JWT)
-POST /transfer
-Authorization: Bearer <token>
+### Transferência
+POST /api/v1/transfer
 Content-Type: application/json
-{ "value": 100.0, "payer": 4, "payee": 15 }
+{ "value": 100.0, "payer": "<uuid>", "payee": "<uuid>" }
+
+> Contrato fiel ao enunciado. IDs são UUID (PK do sistema).
 
 ## Convenções de código
 - Early return — sem else encadeado
 - Exceções de domínio em Domain/Exception/, mapeadas no ExceptionHandler global
-- Value Objects imutáveis, construtor privado + named constructor
+- Value Objects imutáveis, com validação no construtor
 - Eloquent models em Infrastructure/Model/ do respectivo módulo — Application nunca importa model diretamente
 - Injeção via construtor, nunca #[Inject] em Application ou Domain
 - PSR-12 obrigatório (ECS configurado)

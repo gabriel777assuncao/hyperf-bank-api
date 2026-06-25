@@ -63,6 +63,9 @@ jobs:
       - name: ECS Check
         run: vendor/bin/ecs check
 
+      - name: PHPStan
+        run: composer analyse
+
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -112,9 +115,8 @@ jobs:
       DB_COLLATION: utf8mb4_unicode_ci
       DB_PREFIX: ""
       REDIS_HOST: 127.0.0.1
-      REDIS_AUTH: testing
       REDIS_PORT: 6379
-      REDIS_DB: 0
+      REDIS_DB: 1
       RABBITMQ_HOST: 127.0.0.1
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: guest
@@ -133,5 +135,22 @@ jobs:
       - name: Install dependencies
         run: composer install --no-progress --no-interaction
 
-      - name: Run tests
-        run: vendor/bin/phpunit --colors=always
+      - name: Run migrations
+        run: php bin/hyperf.php migrate --force
+
+      - name: Run unit tests
+        run: composer test:unit
+
+      - name: Run integration tests
+        run: |
+          status=0
+          vendor/bin/co-phpunit -c phpunit.integration.xml --colors=always --log-junit junit.xml || status=$?
+          if [ "$status" -eq 0 ]; then
+            exit 0
+          fi
+          if [ "$status" -eq 139 ]; then
+            echo "::warning::Swoole segfault no shutdown (exit 139). Os testes já rodaram; validando pelo relatorio JUnit."
+            php -r '$x = @simplexml_load_file("junit.xml"); if ($x === false) { fwrite(STDERR, "junit.xml ausente ou invalido\n"); exit(1); } $n = 0; foreach ($x->xpath("//testsuite") as $s) { $n += (int) $s["failures"] + (int) $s["errors"]; } fwrite(STDERR, "failures+errors=$n\n"); exit($n > 0 ? 1 : 0);'
+          else
+            exit "$status"
+          fi

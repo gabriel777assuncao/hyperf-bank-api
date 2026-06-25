@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Common\Infrastructure\Exception;
 
 use App\Common\Domain\Exception\DomainException;
+use App\Transaction\Domain\Exception\{AuthorizerUnavailableException, SelfTransferException, TransferNotAuthorizedException, UnauthorizedTransferException};
 use App\User\Domain\Exception\{InvalidCredentialsException, UserAlreadyExistsException, UserNotFoundException};
 use App\Wallet\Domain\Exception\{InsufficientBalanceException, WalletNotFoundException};
 use Hyperf\ExceptionHandler\ExceptionHandler;
@@ -23,9 +24,14 @@ final class DomainExceptionHandler extends ExceptionHandler
             $throwable instanceof WalletNotFoundException => 404,
             $throwable instanceof InvalidCredentialsException => 401,
             $throwable instanceof UserAlreadyExistsException => 409,
+            $throwable instanceof SelfTransferException => 422,
+            $throwable instanceof UnauthorizedTransferException => 422,
+            $throwable instanceof TransferNotAuthorizedException => 422,
             $throwable instanceof InsufficientBalanceException => 422,
+            $throwable instanceof AuthorizerUnavailableException => 503,
             $throwable instanceof InvalidArgumentException => 422,
             $throwable instanceof ValidationException => 422,
+
             default => 500,
         };
 
