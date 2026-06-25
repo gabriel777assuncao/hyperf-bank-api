@@ -16,7 +16,7 @@ use App\User\Domain\Exception\UserNotFoundException;
 use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use App\Wallet\Domain\Entity\Wallet;
 use App\Wallet\Domain\ValueObject\Money;
-use Hyperf\Contract\StdoutLoggerInterface;
+use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 
@@ -29,7 +29,7 @@ final readonly class TransferUseCase
         private AuthorizerContract $authorizer,
         private DatabaseManagerContract $databaseManager,
         private TransferPublisherContract $publisher,
-        private StdoutLoggerInterface $logger,
+        private LoggerInterface $logger,
     ) {
     }
 

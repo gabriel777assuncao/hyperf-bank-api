@@ -5,7 +5,15 @@ declare(strict_types=1);
 namespace App\Wallet\Infrastructure\Model;
 
 use App\Common\Infrastructure\Model;
+use DateTimeInterface;
 
+/**
+ * @property string $id
+ * @property string $user_id
+ * @property int $balance
+ * @property DateTimeInterface|null $created_at
+ * @property DateTimeInterface|null $updated_at
+ */
 class WalletModel extends Model
 {
     public bool $incrementing = false;

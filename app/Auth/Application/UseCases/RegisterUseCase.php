@@ -17,6 +17,8 @@ final readonly class RegisterUseCase
     }
 
     /**
+     * @param array<string, mixed> $data
+     *
      * @return array{token: string, user: User}
      */
     public function execute(array $data): array

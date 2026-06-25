@@ -11,13 +11,10 @@ use App\User\Domain\Enum\UserType;
 use App\User\Domain\Exception\UserAlreadyExistsException;
 use App\User\Domain\ValueObject\{Cnpj, Cpf, Email, Password};
 use App\Wallet\Domain\Contract\WalletRepositoryContract;
-use Hyperf\Database\Exception\QueryException;
 use Ramsey\Uuid\Uuid;
 
 class CreateUserUseCase
 {
-    private const DUPLICATE_ENTRY_CODE = 23000;
-
     public function __construct(
         private readonly UserRepositoryContract $userRepository,
         private readonly WalletRepositoryContract $walletRepository,
@@ -25,6 +22,9 @@ class CreateUserUseCase
     ) {
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
     public function execute(array $data): User
     {
         $email = new Email($data['email']);
@@ -46,18 +46,10 @@ class CreateUserUseCase
 
         $this->assertUnique($user);
 
-        try {
-            $this->databaseManager->transaction(function () use ($user): void {
-                $this->userRepository->save($user);
-                $this->walletRepository->create($user->id());
-            });
-        } catch (QueryException $exception) {
-            if ($this->isDuplicateEntry($exception)) {
-                throw new UserAlreadyExistsException();
-            }
-
-            throw $exception;
-        }
+        $this->databaseManager->transaction(function () use ($user): void {
+            $this->userRepository->save($user);
+            $this->walletRepository->create($user->id());
+        });
 
         return $user;
     }
@@ -79,10 +71,5 @@ class CreateUserUseCase
         if ($this->userRepository->findByEmail($user->email()->toString()) !== null) {
             throw new UserAlreadyExistsException(sprintf('A user with email "%s" already exists.', $user->email()->toString()));
         }
-    }
-
-    private function isDuplicateEntry(QueryException $exception): bool
-    {
-        return (int) $exception->getCode() === self::DUPLICATE_ENTRY_CODE;
     }
 }

@@ -23,12 +23,16 @@ use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Infrastructure\Repository\UserRepository;
 use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use App\Wallet\Infrastructure\Repository\WalletRepository;
+use Hyperf\Logger\LoggerFactory;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 use function Hyperf\Support\env;
 
 return [
     AuthContract::class => JwtAuthService::class,
     DatabaseManagerContract::class => DatabaseManager::class,
+    LoggerInterface::class => fn (ContainerInterface $c) => $c->get(LoggerFactory::class)->get('default'),
 
 
     UserRepositoryContract::class => UserRepository::class,

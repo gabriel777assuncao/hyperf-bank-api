@@ -37,7 +37,7 @@ class AppExceptionHandler extends ExceptionHandler
      *
      * @see \App\Common\Infrastructure\Exception\DomainExceptionHandler
      */
-    public function handle(Throwable $throwable, ResponseInterface $response)
+    public function handle(Throwable $throwable, ResponseInterface $response): ResponseInterface
     {
         if ($response->getStatusCode() !== 200) {
             return $response;

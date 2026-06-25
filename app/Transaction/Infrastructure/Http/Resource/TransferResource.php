@@ -9,6 +9,9 @@ use App\Transaction\Domain\Entity\Transaction;
 
 final class TransferResource extends AbstractResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
         /** @var Transaction $transaction */

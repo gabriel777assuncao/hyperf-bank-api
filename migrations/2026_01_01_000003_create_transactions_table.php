@@ -22,12 +22,12 @@ return new class extends Migration
             $table->foreign('payer_id')
                 ->references('id')
                 ->on('users')
-                ->on_delete('restrict');
+                ->onDelete('restrict');
 
             $table->foreign('payee_id')
                 ->references('id')
                 ->on('users')
-                ->on_delete('restrict');
+                ->onDelete('restrict');
 
             $table->index('payer_id');
             $table->index('payee_id');

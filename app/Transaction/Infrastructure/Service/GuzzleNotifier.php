@@ -6,7 +6,6 @@ namespace App\Transaction\Infrastructure\Service;
 
 use App\Transaction\Domain\Contract\NotifierContract;
 use App\User\Domain\Entity\User;
-use GuzzleHttp\Exception\GuzzleException;
 use Hyperf\Guzzle\ClientFactory;
 
 final class GuzzleNotifier implements NotifierContract
@@ -24,15 +23,11 @@ final class GuzzleNotifier implements NotifierContract
     {
         $client = $this->clientFactory->create(['timeout' => self::TIMEOUT]);
 
-        try {
-            $client->post(self::URL, [
-                'json' => [
-                    'user_id' => $payee->id(),
-                    'email' => $payee->email()->toString(),
-                ],
-            ]);
-        } catch (GuzzleException) {
-            // Best-effort: consumer will nack and retry via AMQP
-        }
+        $client->post(self::URL, [
+            'json' => [
+                'user_id' => $payee->id(),
+                'email' => $payee->email()->toString(),
+            ],
+        ]);
     }
 }

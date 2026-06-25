@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace App\Auth\Infrastructure\Http\Resource;
 
 use App\Common\Infrastructure\Http\Resource\AbstractResource;
-use App\User\Domain\Entity\User;
 
 final class AuthResponseResource extends AbstractResource
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function toArray(): array
     {
-        /** @var array{token: string, user: User} $data */
         ['token' => $token, 'user' => $user] = $this->resource;
 
         return [

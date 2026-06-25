@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\User\Domain\ValueObject;
 
 use InvalidArgumentException;
-use RuntimeException;
 
 final class Password
 {
@@ -19,13 +18,7 @@ final class Password
             throw new InvalidArgumentException('Password must be at least 8 characters.');
         }
 
-        $hash = password_hash($trimmed, PASSWORD_BCRYPT);
-
-        if ($hash === false) {
-            throw new RuntimeException('Failed to hash password.');
-        }
-
-        $this->hash = $hash;
+        $this->hash = password_hash($trimmed, PASSWORD_BCRYPT);
     }
 
     public static function fromHash(string $hash): self
