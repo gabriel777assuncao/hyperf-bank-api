@@ -9,12 +9,12 @@ use App\Common\Infrastructure\Contract\DatabaseManagerContract;
 use App\Transaction\Domain\Contract\{AuthorizerContract, TransactionRepositoryContract, TransferPublisherContract};
 use App\Transaction\Domain\Entity\Transaction;
 use App\Transaction\Domain\Enum\TransactionStatus;
-use App\Transaction\Domain\Exception\{SelfTransferException, UnauthorizedTransferException};
+use App\Transaction\Domain\Exception\UnauthorizedTransferException;
 use App\User\Domain\Contract\UserRepositoryContract;
-use App\User\Domain\Entity\User;
 use App\User\Domain\Exception\UserNotFoundException;
 use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use App\Wallet\Domain\Entity\Wallet;
+// Certifique-se de criar ou usar uma exceção similar
 use App\Wallet\Domain\ValueObject\Money;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -35,26 +35,28 @@ final readonly class TransferUseCase
 
     public function execute(string $payerId, string $payeeId, Money $amount): Transaction
     {
-        $this->assertNotSelfTransfer($payerId, $payeeId);
         $payer = $this->userRepository->findById($payerId);
-
+        
         if ($payer === null) {
             throw new UserNotFoundException(sprintf('User with id "%s" not found.', $payerId));
         }
 
-        $this->assertPayerCanTransfer($payer);
+        if (! $payer->canTransfer()) {
+            throw new UnauthorizedTransferException($payer->id());
+        }
 
         $payee = $this->userRepository->findById($payeeId);
+        
         if ($payee === null) {
             throw new UserNotFoundException(sprintf('User with id "%s" not found.', $payeeId));
         }
 
         $transaction = new Transaction(
-            id: (string) Uuid::uuid4(),
-            payerId: $payerId,
-            payeeId: $payeeId,
-            amount: $amount,
-            status: TransactionStatus::PENDING,
+                id: (string) Uuid::uuid4(),
+                payerId: $payerId,
+                payeeId: $payeeId,
+                amount: $amount,
+                status: TransactionStatus::PENDING,
         );
 
         try {
@@ -86,8 +88,6 @@ final readonly class TransferUseCase
         return $transaction;
     }
 
-    /**
-     */
     private function recordFailure(Transaction $transaction): void
     {
         $transaction->markAsFailed();
@@ -96,24 +96,10 @@ final readonly class TransferUseCase
             $this->transactionRepository->save($transaction);
         } catch (Throwable $exception) {
             $this->logger->error(sprintf(
-                'Failed to record FAILED transaction "%s": %s',
-                $transaction->id(),
-                $exception->getMessage(),
+                    'Failed to record FAILED transaction "%s": %s',
+                    $transaction->id(),
+                    $exception->getMessage(),
             ));
-        }
-    }
-
-    private function assertNotSelfTransfer(string $payerId, string $payeeId): void
-    {
-        if ($payerId === $payeeId) {
-            throw new SelfTransferException($payerId);
-        }
-    }
-
-    private function assertPayerCanTransfer(User $payer): void
-    {
-        if ($payer->isShopkeeper()) {
-            throw new UnauthorizedTransferException($payer->id());
         }
     }
 

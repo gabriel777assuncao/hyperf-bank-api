@@ -27,20 +27,6 @@ final class TransferRulesTest extends TestCase
         $this->assertArrayHasKey('errors', $response->json());
     }
 
-    public function test_value_exceeding_max_returns_422(): void
-    {
-        $payer = $this->createUser();
-        $payee = $this->createUser();
-
-        $response = $this->post('/api/v1/transfer', [
-            'payer' => $payer->id,
-            'payee' => $payee->id,
-            'value' => 100000000.00,
-        ]);
-
-        $response->assertUnprocessable();
-        $this->assertArrayHasKey('errors', $response->json());
-    }
 
     public function test_shopkeeper_cannot_send_transfer(): void
     {

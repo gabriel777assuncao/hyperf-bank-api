@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Transaction\Domain\Entity;
 
 use App\Transaction\Domain\Enum\TransactionStatus;
+use App\Transaction\Domain\Exception\SelfTransferException;
 use App\Wallet\Domain\ValueObject\Money;
 use DateTimeImmutable;
 
@@ -18,6 +19,9 @@ final class Transaction
         private TransactionStatus $status,
         private ?DateTimeImmutable $createdAt = null,
     ) {
+        if ($this->payerId === $this->payeeId) {
+            throw new SelfTransferException($this->payerId);
+        }
     }
 
     public function id(): string

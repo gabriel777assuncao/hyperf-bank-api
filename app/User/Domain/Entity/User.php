@@ -86,4 +86,9 @@ final class User
     {
         return $this->type === UserType::NORMAL;
     }
+
+    public function canTransfer(): bool
+    {
+        return ! $this->isShopkeeper();
+    }
 }
