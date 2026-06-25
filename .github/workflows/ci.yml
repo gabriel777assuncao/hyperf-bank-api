@@ -63,6 +63,9 @@ jobs:
       - name: ECS Check
         run: vendor/bin/ecs check
 
+      - name: PHPStan
+        run: composer analyse
+
   test:
     name: Test
     runs-on: ubuntu-latest

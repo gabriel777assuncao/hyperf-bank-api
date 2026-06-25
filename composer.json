@@ -80,7 +80,6 @@
         "test": "co-phpunit --prepend test/bootstrap.php --colors=always",
         "test:unit": "vendor/bin/phpunit -c phpunit.unit.xml --colors=always",
         "test:integration": "@php test/warmup.php && co-phpunit -c phpunit.integration.xml --colors=always",
-        "cs-fix": "php-cs-fixer fix $1",
         "ecs": "ecs check --fix",
         "ecs:check": "ecs check",
         "analyse": "phpstan analyse --memory-limit 300M",
