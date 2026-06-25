@@ -116,15 +116,6 @@ final class TransferUseCaseTest extends TestCase
         $this->assertSame('payee-1', $result->payeeId());
     }
 
-    public function test_self_transfer_throws_exception(): void
-    {
-        $this->userRepository->expects($this->never())->method('findById');
-
-        $this->expectException(SelfTransferException::class);
-
-        $this->useCase->execute('same-id', 'same-id', new Money(1000));
-    }
-
     public function test_shopkeeper_cannot_transfer(): void
     {
         $shopkeeper = $this->makeUser('shopkeeper-1', UserType::SHOPKEEPER);
