@@ -213,10 +213,6 @@
 						"value": "application/json"
 					},
 					{
-						"key": "Authorization",
-						"value": "Bearer {{token}}"
-					},
-					{
 						"key": "Idempotency-Key",
 						"value": "{{$guid}}"
 					}

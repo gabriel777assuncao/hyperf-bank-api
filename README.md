@@ -47,7 +47,13 @@ Monolito modular com inversão de dependência nas bordas de I/O. Cada módulo t
 | `NotifierContract`          | `GuzzleNotifier`   | `GuzzleNotifier`   |
 | `TransferPublisherContract` | `AmqpTransferPublisher` | `AmqpTransferPublisher` |
 
-> Em `APP_ENV=dev`, o `StubAuthorizer` sempre autoriza (o mock real nega aleatoriamente, quebrando testes determinísticos).
+---
+
+## Postman
+
+A coleção com o happy path completo (health → register → login → transfer) está em `postman/hyperf-bank-api.postman_collection.json`. Importe o arquivo no Postman e execute as requests na ordem — cada uma popula as variáveis usadas pela seguinte (`token`, `payer_id`, `payee_id`).
+
+> Execute com `APP_ENV=dev` (padrão) para que o `StubAuthorizer` sempre autorize as transferências.
 
 ---
 
@@ -236,7 +242,3 @@ composer test                                                   # tudo (padrão 
 6. **Idempotência via Redis** — não pedida no enunciado, mas essencial para evitar débitos duplicados em retries de rede.
 
 ---
-
-## Autor
-
-Gabriel Assunção — [github.com/gabigol](https://github.com/gabigol)
