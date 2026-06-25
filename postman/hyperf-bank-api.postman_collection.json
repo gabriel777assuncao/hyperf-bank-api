@@ -223,7 +223,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"payee\": \"{{payee_id}}\",\n    \"value\": 100.00\n}"
+					"raw": "{\n    \"payer\": \"{{payer_id}}\",\n    \"payee\": \"{{payee_id}}\",\n    \"value\": 100.00\n}"
 				},
 				"url": {
 					"raw": "{{base_url}}/api/v1/transfer",

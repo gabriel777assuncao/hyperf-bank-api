@@ -7,7 +7,7 @@ use Hyperf\Amqp\IO\IOFactory;
 use function Hyperf\Support\env;
 
 return [
-    'enable' => true,
+    'enable' => (bool) env('AMQP_ENABLE', true),
     'default' => [
         'host' => env('RABBITMQ_HOST', 'rabbitmq'),
         'port' => (int) env('RABBITMQ_PORT', 5672),

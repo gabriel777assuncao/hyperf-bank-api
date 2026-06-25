@@ -8,6 +8,7 @@
   <php>
     <env name="APP_ENV" value="testing" force="true"/>
     <env name="REDIS_DB" value="1" force="true"/>
+    <env name="AMQP_ENABLE" value="false" force="true"/>
   </php>
   <source>
     <include>
