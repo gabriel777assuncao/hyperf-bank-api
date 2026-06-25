@@ -9,7 +9,6 @@ use App\Transaction\Application\UseCases\TransferUseCase;
 use App\Transaction\Domain\Contract\{AuthorizerContract, TransactionRepositoryContract, TransferPublisherContract};
 use App\Transaction\Domain\Enum\TransactionStatus;
 use App\Transaction\Domain\Exception\{AuthorizerUnavailableException,
-    SelfTransferException,
     TransferNotAuthorizedException,
     UnauthorizedTransferException};
 use App\User\Domain\Contract\UserRepositoryContract;
