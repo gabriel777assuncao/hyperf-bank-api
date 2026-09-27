@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace App\Transaction\Infrastructure\Amqp\Producer;
 
+use App\Transaction\Domain\Entity\OutboxEvent;
 use Hyperf\Amqp\Annotation\Producer as ProducerAnnotation;
 use Hyperf\Amqp\Message\{ProducerMessage, Type};
 
 #[ProducerAnnotation(exchange: 'transfer', routingKey: 'transfer.completed')]
-final class TransferCompletedProducer extends ProducerMessage
+final class OutboxEventProducer extends ProducerMessage
 {
     protected Type|string $type = Type::DIRECT;
 
-    public function __construct(string $transactionId, string $payeeId)
+    public function __construct(OutboxEvent $event)
     {
-        $this->payload = [
-            'transaction_id' => $transactionId,
-            'payee_id' => $payeeId,
-        ];
+        $this->payload = $event->payload();
     }
 }

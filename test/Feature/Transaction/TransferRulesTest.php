@@ -67,7 +67,7 @@ final class TransferRulesTest extends TestCase
             'status' => 'failed',
         ]);
 
-        $this->assertCount(0, $this->publisher->published);
+        $this->assertNoOutboxEventRecorded();
     }
 
     public function test_payee_not_found_returns_404(): void

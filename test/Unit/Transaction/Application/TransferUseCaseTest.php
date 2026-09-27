@@ -6,8 +6,9 @@ namespace HyperfTest\Unit\Transaction\Application;
 
 use App\Common\Infrastructure\Contract\DatabaseManagerContract;
 use App\Transaction\Application\UseCases\TransferUseCase;
-use App\Transaction\Domain\Contract\{AuthorizerContract, TransactionRepositoryContract, TransferPublisherContract};
-use App\Transaction\Domain\Enum\TransactionStatus;
+use App\Transaction\Domain\Contract\{AuthorizerContract, OutboxEventRepositoryContract, TransactionRepositoryContract};
+use App\Transaction\Domain\Entity\{OutboxEvent, Transaction};
+use App\Transaction\Domain\Enum\{OutboxEventStatus, TransactionStatus};
 use App\Transaction\Domain\Exception\{AuthorizerUnavailableException,
     TransferNotAuthorizedException,
     UnauthorizedTransferException};
@@ -19,12 +20,10 @@ use App\User\Domain\ValueObject\{Cpf, Email, Password};
 use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use App\Wallet\Domain\Entity\Wallet;
 use App\Wallet\Domain\Exception\InsufficientBalanceException;
-use App\Transaction\Domain\Entity\Transaction;
 use App\Wallet\Domain\ValueObject\Money;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * @internal
@@ -38,11 +37,11 @@ final class TransferUseCaseTest extends TestCase
 
     private TransactionRepositoryContract&MockObject $transactionRepository;
 
+    private OutboxEventRepositoryContract&MockObject $outboxEventRepository;
+
     private AuthorizerContract&MockObject $authorizer;
 
     private DatabaseManagerContract&MockObject $databaseManager;
-
-    private TransferPublisherContract&MockObject $publisher;
 
     private LoggerInterface&MockObject $logger;
 
@@ -53,9 +52,9 @@ final class TransferUseCaseTest extends TestCase
         $this->userRepository = $this->createMock(UserRepositoryContract::class);
         $this->walletRepository = $this->createMock(WalletRepositoryContract::class);
         $this->transactionRepository = $this->createMock(TransactionRepositoryContract::class);
+        $this->outboxEventRepository = $this->createMock(OutboxEventRepositoryContract::class);
         $this->authorizer = $this->createMock(AuthorizerContract::class);
         $this->databaseManager = $this->createMock(DatabaseManagerContract::class);
-        $this->publisher = $this->createMock(TransferPublisherContract::class);
         $this->logger = $this->createMock(LoggerInterface::class);
 
         $this->databaseManager
@@ -66,9 +65,9 @@ final class TransferUseCaseTest extends TestCase
             $this->userRepository,
             $this->walletRepository,
             $this->transactionRepository,
+            $this->outboxEventRepository,
             $this->authorizer,
             $this->databaseManager,
-            $this->publisher,
             $this->logger,
         );
     }
@@ -81,6 +80,11 @@ final class TransferUseCaseTest extends TestCase
             ->with($this->callback(
                 fn (Transaction $transaction): bool => $transaction->status() === TransactionStatus::FAILED,
             ));
+    }
+
+    private function expectNoOutboxEventRecorded(): void
+    {
+        $this->outboxEventRepository->expects($this->never())->method('save');
     }
 
     public function test_happy_path_transfer_completed(): void
@@ -105,7 +109,18 @@ final class TransferUseCaseTest extends TestCase
 
         $this->walletRepository->expects($this->exactly(2))->method('save');
         $this->transactionRepository->expects($this->once())->method('save');
-        $this->publisher->expects($this->once())->method('publishTransferCompleted');
+
+        $this->outboxEventRepository
+            ->expects($this->once())
+            ->method('save')
+            ->with($this->callback(
+                fn (OutboxEvent $event): bool => $event->status() === OutboxEventStatus::PENDING
+                    && $event->aggregateId() === $event->payload()['transaction_id']
+                    && $event->payload()['payer_id'] === 'payer-1'
+                    && $event->payload()['payee_id'] === 'payee-1'
+                    && $event->payload()['value'] === 1000
+                    && $event->payload()['status'] === 'completed',
+            ));
 
         $result = $this->useCase->execute('payer-1', 'payee-1', new Money(1000));
 
@@ -171,6 +186,7 @@ final class TransferUseCaseTest extends TestCase
 
         $this->databaseManager->expects($this->never())->method('transaction');
         $this->expectFailedTransactionRecorded();
+        $this->expectNoOutboxEventRecorded();
 
         $this->expectException(TransferNotAuthorizedException::class);
 
@@ -194,6 +210,7 @@ final class TransferUseCaseTest extends TestCase
 
         $this->databaseManager->expects($this->never())->method('transaction');
         $this->expectFailedTransactionRecorded();
+        $this->expectNoOutboxEventRecorded();
 
         $this->expectException(AuthorizerUnavailableException::class);
 
@@ -221,42 +238,11 @@ final class TransferUseCaseTest extends TestCase
             ]);
 
         $this->expectFailedTransactionRecorded();
+        $this->expectNoOutboxEventRecorded();
 
         $this->expectException(InsufficientBalanceException::class);
 
         $this->useCase->execute('payer-1', 'payee-1', new Money(10000));
-    }
-
-    public function test_publisher_failure_propagates_exception(): void
-    {
-        $payer = $this->makeUser('payer-1', UserType::NORMAL);
-        $payee = $this->makeUser('payee-1', UserType::NORMAL);
-
-        $this->userRepository->method('findById')
-            ->willReturnMap([
-                ['payer-1', $payer],
-                ['payee-1', $payee],
-            ]);
-
-        $payerWallet = $this->makeWallet('payer-1', 10000);
-        $payeeWallet = $this->makeWallet('payee-1', 5000);
-
-        $this->walletRepository->method('findByUserIdForUpdate')
-            ->willReturnMap([
-                ['payer-1', $payerWallet],
-                ['payee-1', $payeeWallet],
-            ]);
-
-        $this->transactionRepository->expects($this->once())->method('save');
-
-        $this->publisher
-            ->method('publishTransferCompleted')
-            ->willThrowException(new RuntimeException('AMQP down'));
-
-        $this->expectException(RuntimeException::class);
-        $this->expectExceptionMessage('AMQP down');
-
-        $this->useCase->execute('payer-1', 'payee-1', new Money(1000));
     }
 
     public function test_lock_order_when_payer_id_is_lower(): void

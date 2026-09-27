@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace HyperfTest\Feature\Transaction;
 
+use App\Transaction\Infrastructure\Model\OutboxEventModel;
 use HyperfTest\Feature\Abstracts\TestCase;
 
 /**
@@ -43,7 +44,12 @@ final class TransferHappyPathTest extends TestCase
             'status' => 'completed',
         ]);
 
-        $this->assertCount(1, $this->publisher->published);
-        $this->assertSame($payee->id, $this->publisher->published[0]['payeeId']);
+        $outboxEvent = OutboxEventModel::query()
+            ->where('aggregate_id', $body['data']['id'])
+            ->first();
+
+        $this->assertNotNull($outboxEvent);
+        $this->assertContains($outboxEvent->status, ['pending', 'published']);
+        $this->assertSame($payee->id, $outboxEvent->payload['payee_id']);
     }
 }
