@@ -45,7 +45,7 @@ Monolito modular com inversão de dependência nas bordas de I/O. Cada módulo t
 |-----------------------------|--------------------|--------------------|
 | `AuthorizerContract`        | `StubAuthorizer`   | `GuzzleAuthorizer` |
 | `NotifierContract`          | `GuzzleNotifier`   | `GuzzleNotifier`   |
-| `TransferPublisherContract` | `AmqpTransferPublisher` | `AmqpTransferPublisher` |
+| `OutboxPublisherContract`   | `AmqpOutboxPublisher` | `AmqpOutboxPublisher` |
 
 ---
 
@@ -105,6 +105,14 @@ transactions (uuid PK)
  ├─ payer_id, payee_id  FK→users
  ├─ value   BIGINT UNSIGNED
  └─ status  pending | completed | failed
+
+outbox_events (uuid PK)
+ ├─ aggregate_id   uuid FK→transactions   # 1 transação : N eventos
+ ├─ status         pending | published | failed
+ ├─ tries          UNSIGNED INT DEFAULT 0  # tentativas de publicação
+ ├─ next_retry_at  datetime NULL           # backoff exponencial (NULL = imediato)
+ ├─ payload        JSON (metadados da transação + notificação)
+ └─ published_at   datetime NULL
 ```
 
 ---
@@ -163,10 +171,22 @@ Orquestrado por `TransferUseCase`:
    - `lockForUpdate` nas carteiras em ordem lexicográfica dos UUIDs (evita deadlock)
    - `payer.debit(money)` → `payee.credit(money)`
    - Persiste wallets e transaction com status `completed`
-6. Publica evento em fila AMQP `transfer.completed`
-7. Retorna `201`
+   - Grava `OutboxEvent` com status `pending` (outbox pattern, mesma transação)
+6. Retorna `201`
 
-O `TransferNotificationConsumer` consome a fila e chama `NotifierContract::notify(payee)` — `ACK` no sucesso, `NACK` (requeue) na falha.
+O relay `OutboxRelayCrontab` (a cada 5s, `onOneServer` + `singleton`) busca eventos `pending` cujo aggregate está `completed` **e cujo `next_retry_at` está vencido** (`NULL` ou `<= NOW()`), publica na fila AMQP `transfer.completed` e marca como `published`. O `TransferNotificationConsumer` consome a fila e chama `NotifierContract::notify(payee)` — `ACK` no sucesso, `NACK` (requeue) na falha.
+
+Em falha de publicação, o evento permanece `pending` e é reagendado com **backoff exponencial**: `next_retry_at = agora + min(2^tries, max_delay_seconds)`. Ao atingir `max_tries` tentativas, é marcado como `failed` (terminal).
+
+| Tentativa | Delay |
+|-----------|-------|
+| 1ª falha  | 2s    |
+| 2ª falha  | 4s    |
+| 3ª falha  | 8s    |
+| 4ª falha  | 16s   |
+| 5ª falha  | `failed` (terminal) |
+
+Configurável via env: `OUTBOX_MAX_TRIES` (default `5`), `OUTBOX_MAX_DELAY_SECONDS` (default `60`), `OUTBOX_BATCH_SIZE` (default `100`).
 
 ---
 
@@ -178,7 +198,7 @@ O `TransferNotificationConsumer` consome a fila e chama `NotifierContract::notif
 | 2 | Saldo insuficiente rejeitado em `Wallet::debit` |
 | 3 | Autorizador consultado antes da transação de BD |
 | 4 | Transferência atômica (débito + crédito + persistência) |
-| 5 | Notificação disparada após o commit via AMQP |
+| 5 | Notificação publicada via outbox + relay (at-least-once) |
 | 6 | `Money` sempre em centavos (`BIGINT UNSIGNED`) |
 | 7 | Self-transfer bloqueado em FormRequest e UseCase |
 | 8 | CPF, CNPJ e e-mail únicos no banco |
@@ -218,7 +238,7 @@ docker compose exec app vendor/bin/co-phpunit -c phpunit.integration.xml  # inte
 composer test                                                   # tudo (padrão no CI)
 ```
 
-~130 métodos (unit + feature), 176 casos com data providers. Usa `FakeAuthorizer` e `InMemoryTransferPublisher` para isolar adapters externos.
+~130 métodos (unit + feature), 176 casos com data providers. Usa `FakeAuthorizer` para isolar o autorizador externo.
 
 ---
 
@@ -237,8 +257,9 @@ composer test                                                   # tudo (padrão 
 1. **Versionamento `/api/v1`** — facilita evolução sem quebrar clientes.
 2. **`cpf` e `cnpj` separados no register** — cada um tem VO próprio com validação de dígitos; o login usa `document` unificado.
 3. **IDs como UUID** — o enunciado usa inteiros, mas UUIDs evitam enumeração e são mais seguros em APIs públicas.
-4. **Notificação via AMQP** em vez de `Coroutine::create()` — garante durabilidade, retry com ACK/NACK e desacoplamento do request HTTP.
-5. **Lock de carteiras ordenado por UUID** — evita deadlock em transferências concorrentes A→B e B→A.
-6. **Idempotência via Redis** — não pedida no enunciado, mas essencial para evitar débitos duplicados em retries de rede.
+4. **Outbox pattern + relay via crontab** em vez de publicar direto no request — garante atomicidade entre persistência e evento, com publicação assíncrona confiável (at-least-once).
+5. **Retry com backoff exponencial no relay** — `tries`/`next_retry_at` com `max_tries` configurável; falhas transitórias não descartam o evento e o intervalo cresce para não sobrecarregar um serviço externo instável.
+6. **Lock de carteiras ordenado por UUID** — evita deadlock em transferências concorrentes A→B e B→A.
+7. **Idempotência via Redis** — não pedida no enunciado, mas essencial para evitar débitos duplicados em retries de rede.
 
 ---

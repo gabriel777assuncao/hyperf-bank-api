@@ -37,7 +37,7 @@ final class TransferAuthorizationTest extends TestCase
             'status' => 'failed',
         ]);
 
-        $this->assertCount(0, $this->publisher->published);
+        $this->assertNoOutboxEventRecorded();
     }
 
     public function test_authorizer_unavailable_returns_503_and_persists_failed_transaction(): void
@@ -65,6 +65,6 @@ final class TransferAuthorizationTest extends TestCase
             'status' => 'failed',
         ]);
 
-        $this->assertCount(0, $this->publisher->published);
+        $this->assertNoOutboxEventRecorded();
     }
 }

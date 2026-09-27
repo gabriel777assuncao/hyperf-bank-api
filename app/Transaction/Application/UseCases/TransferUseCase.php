@@ -6,15 +6,14 @@ namespace App\Transaction\Application\UseCases;
 
 use App\Common\Domain\Exception\DomainException;
 use App\Common\Infrastructure\Contract\DatabaseManagerContract;
-use App\Transaction\Domain\Contract\{AuthorizerContract, TransactionRepositoryContract, TransferPublisherContract};
-use App\Transaction\Domain\Entity\Transaction;
+use App\Transaction\Domain\Contract\{AuthorizerContract, OutboxEventRepositoryContract, TransactionRepositoryContract};
+use App\Transaction\Domain\Entity\{OutboxEvent, Transaction};
 use App\Transaction\Domain\Enum\TransactionStatus;
 use App\Transaction\Domain\Exception\UnauthorizedTransferException;
 use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Domain\Exception\UserNotFoundException;
 use App\Wallet\Domain\Contract\WalletRepositoryContract;
 use App\Wallet\Domain\Entity\Wallet;
-// Certifique-se de criar ou usar uma exceção similar
 use App\Wallet\Domain\ValueObject\Money;
 use Psr\Log\LoggerInterface;
 use Ramsey\Uuid\Uuid;
@@ -26,9 +25,9 @@ final readonly class TransferUseCase
         private UserRepositoryContract $userRepository,
         private WalletRepositoryContract $walletRepository,
         private TransactionRepositoryContract $transactionRepository,
+        private OutboxEventRepositoryContract $outboxEventRepository,
         private AuthorizerContract $authorizer,
         private DatabaseManagerContract $databaseManager,
-        private TransferPublisherContract $publisher,
         private LoggerInterface $logger,
     ) {
     }
@@ -75,15 +74,17 @@ final readonly class TransferUseCase
                 $this->walletRepository->save($payeeWallet);
 
                 $transaction->markAsCompleted();
+
                 $this->transactionRepository->save($transaction);
+                $this->outboxEventRepository->save(
+                    OutboxEvent::forCompletedTransfer((string) Uuid::uuid4(), $transaction),
+                );
             });
         } catch (DomainException $exception) {
             $this->recordFailure($transaction);
 
             throw $exception;
         }
-
-        $this->publisher->publishTransferCompleted($transaction->id(), $payeeId);
 
         return $transaction;
     }

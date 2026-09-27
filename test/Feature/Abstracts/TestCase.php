@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace HyperfTest\Feature\Abstracts;
 
 use App\Auth\Domain\Contract\AuthContract;
-use App\Transaction\Domain\Contract\{AuthorizerContract, TransferPublisherContract};
+use App\Transaction\Domain\Contract\AuthorizerContract;
+use App\Transaction\Infrastructure\Model\OutboxEventModel;
 use App\User\Domain\Contract\UserRepositoryContract;
 use App\User\Infrastructure\Model\UserModel;
 use App\Wallet\Infrastructure\Model\WalletModel;
@@ -13,15 +14,11 @@ use Hyperf\Context\ApplicationContext;
 use Hyperf\DbConnection\Db;
 use Hyperf\Redis\Redis;
 use Hyperf\Testing\TestCase as HyperfTestCase;
-use HyperfTest\Feature\Support\{FakeAuthorizer, InMemoryTransferPublisher};
+use HyperfTest\Feature\Support\FakeAuthorizer;
 
 abstract class TestCase extends HyperfTestCase
 {
-    protected InMemoryTransferPublisher $publisher;
-
     protected FakeAuthorizer $fakeAuthorizer;
-
-    private static InMemoryTransferPublisher $sharedPublisher;
 
     private static FakeAuthorizer $sharedAuthorizer;
 
@@ -29,7 +26,6 @@ abstract class TestCase extends HyperfTestCase
     {
         parent::setUp();
         $this->bootFakes();
-        $this->publisher->reset();
         $this->fakeAuthorizer->reset();
         $this->truncateDatabase();
         $this->flushRedis();
@@ -37,24 +33,20 @@ abstract class TestCase extends HyperfTestCase
 
     private function bootFakes(): void
     {
-        if (! isset(self::$sharedPublisher)) {
-            self::$sharedPublisher = new InMemoryTransferPublisher();
-        }
         if (! isset(self::$sharedAuthorizer)) {
             self::$sharedAuthorizer = new FakeAuthorizer();
         }
 
         $container = ApplicationContext::getContainer();
-        $container->set(TransferPublisherContract::class, self::$sharedPublisher);
         $container->set(AuthorizerContract::class, self::$sharedAuthorizer);
 
-        $this->publisher = self::$sharedPublisher;
         $this->fakeAuthorizer = self::$sharedAuthorizer;
     }
 
     private function truncateDatabase(): void
     {
         Db::statement('SET FOREIGN_KEY_CHECKS=0');
+        Db::statement('TRUNCATE TABLE outbox_events');
         Db::statement('TRUNCATE TABLE transactions');
         Db::statement('TRUNCATE TABLE wallets');
         Db::statement('TRUNCATE TABLE users');
@@ -85,6 +77,11 @@ protected function createShopkeeper(array $overrides = []): UserModel
     protected function fundWallet(string $userId, int $cents): void
     {
         WalletModel::where('user_id', $userId)->update(['balance' => $cents]);
+    }
+
+    protected function assertNoOutboxEventRecorded(): void
+    {
+        $this->assertSame(0, OutboxEventModel::query()->count());
     }
 
     protected function generateToken(UserModel $user): string
